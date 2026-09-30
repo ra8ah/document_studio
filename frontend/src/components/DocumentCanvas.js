@@ -132,12 +132,15 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           + Add line item
         </button>
       )}
-      <div className="sums">
-        <div className="row"><span className="mono">Subtotal</span><span className="v">{money(totals.sub, currency)}</span></div>
-        {discount?.enabled && <div className="row"><span className="mono">{discount.label || "Discount"}{discount.mode === "percent" ? ` (${discount.value}%)` : ""}</span><span className="v">− {money(totals.disc, currency)}</span></div>}
-        {tax?.enabled && <div className="row"><span className="mono">{tax.label || "Tax"}{tax.mode === "percent" ? ` (${tax.value}%)` : ""}</span><span className="v">{money(totals.tax, currency)}</span></div>}
-      </div>
     </>
+  );
+
+  const sumsBlock = (
+    <div className="sums">
+      <div className="row"><span className="mono">Subtotal</span><span className="v">{money(totals.sub, currency)}</span></div>
+      {discount?.enabled && <div className="row"><span className="mono">{discount.label || "Discount"}{discount.mode === "percent" ? ` (${discount.value}%)` : ""}</span><span className="v">− {money(totals.disc, currency)}</span></div>}
+      {tax?.enabled && <div className="row"><span className="mono">{tax.label || "Tax"}{tax.mode === "percent" ? ` (${tax.value}%)` : ""}</span><span className="v">{money(totals.tax, currency)}</span></div>}
+    </div>
   );
 
   let body;
@@ -147,11 +150,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
       <>
         <div className="hero">
           <h1>{data.label}<span className="dot">.</span></h1>
-          <div className="due">
-            <div className="mono">{isReceipt ? "Amount paid" : "Amount due"}</div>
-            <div className="amt">{money(totals.total, currency)}</div>
-            {isReceipt && <div className="paidstamp">PAID</div>}
-          </div>
+          {isReceipt && <div className="paidstamp">PAID</div>}
         </div>
         <div className="parties">
           <div><div className="mono">{isReceipt ? "Received from" : "Bill to"}</div>
@@ -169,7 +168,16 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           <Editable field="project_reference" tag="div" className="v" editable={editable} initial={data.project_reference || ""} />
         </div>
         {Table(true)}
-        <div className="total"><div className="mono">{isReceipt ? "Amount paid" : "Total due"}</div><div className="big">{money(totals.total, currency)}</div></div>
+        <div className="billing">
+          <div className="bnote">
+            <div className="mono">Billing note</div>
+            <Editable field="billing_note" tag="p" editable={editable} initial={data.billing_note || "Professional services are billed separately from third-party subscriptions, domains and platform charges."} />
+          </div>
+          <div className="totcol">
+            {sumsBlock}
+            <div className="total"><div className="mono">{isReceipt ? "Amount paid" : "Total due"}</div><div className="big">{money(totals.total, currency)}</div></div>
+          </div>
+        </div>
         <div className="pay">
           <div><div className="mono">Payment details</div><Editable field="payment_details" tag="p" editable={editable} initial={data.payment_details || ""} /></div>
           {isReceipt ? (
@@ -224,6 +232,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           <div className="section">
             <div className="mono">Pricing</div>
             {Table(true)}
+            {sumsBlock}
             <div className="total"><div className="mono">Total</div><div className="big">{money(totals.total, currency)}</div></div>
           </div>
         )}

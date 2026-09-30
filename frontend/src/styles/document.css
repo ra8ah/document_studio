@@ -56,6 +56,10 @@
 .doc-page .rm:hover { transform:scale(1.18); }
 
 .doc-page .sums { margin-left:auto; width:78mm; margin-top:1mm; }
+.doc-page .billing { display:grid; grid-template-columns:1fr 1fr; gap:12mm; margin-top:6mm; align-items:start; }
+.doc-page .bnote .mono { margin-bottom:2.5mm; }
+.doc-page .bnote p { font-size:8.3pt; line-height:1.55; color:var(--muted); white-space:pre-line; }
+.doc-page .totcol .sums { margin-left:0; width:100%; margin-top:0; }
 .doc-page .sums .row { display:flex; justify-content:space-between; align-items:baseline; padding:2mm 0; border-bottom:.4pt solid var(--rule2); }
 .doc-page .sums .row:last-child { border-bottom:0; }
 .doc-page .sums .v { font-weight:500; font-size:8.6pt; }
@@ -83,7 +87,7 @@
 .doc-page .sign .line { border-top:.75pt solid var(--rule); padding-top:2mm; font-size:8pt; color:var(--muted); }
 .doc-page .secrm { margin-left:8px; border:0; background:transparent; color:var(--accent); cursor:pointer; font-family:var(--mono); font-size:7pt; }
 
-.doc-page footer { margin-top:auto; padding-top:5mm; }
+.doc-page footer { margin-top:10mm; padding-top:5mm; }
 .doc-page footer .in { display:flex; gap:6mm; align-items:baseline; border-top:.75pt solid var(--rule); padding-top:2.5mm; flex-wrap:wrap; }
 .doc-page footer b { font-weight:500; font-size:8pt; }
 .doc-page footer .mono { letter-spacing:.06em; text-transform:none; }

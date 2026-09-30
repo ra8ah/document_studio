@@ -24,7 +24,7 @@ export default function DocumentEditor() {
   const nav = useNavigate();
   const canvasRef = useRef(null);
   const [doc, setDoc] = useState(null);
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("INR");
   const [theme, setTheme] = useState("light");
   const [status, setStatus] = useState("draft");
   const [discount, setDiscount] = useState({ enabled: false, mode: "percent", value: 0, label: "Discount" });

@@ -55,7 +55,7 @@ class BusinessProfile(BaseModel):
     swift: str = ""
     upi: str = ""
     payment_links: str = ""
-    default_currency: str = "USD"
+    default_currency: str = "INR"
     default_terms: str = "Payment due within 14 days of the issue date."
     default_notes: str = ""
     prefixes: dict = Field(default_factory=dict)
@@ -69,7 +69,7 @@ class ClientIn(BaseModel):
     email: str = ""
     phone: str = ""
     tax_id: str = ""
-    currency: str = "USD"
+    currency: str = "INR"
     notes: str = ""
 
 

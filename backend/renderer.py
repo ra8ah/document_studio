@@ -107,7 +107,10 @@ def _page_css(theme: str, page_size: str) -> str:
   }}
   *{{box-sizing:border-box;margin:0;padding:0}}
   html,body{{background:var(--paper);color:var(--text);font-family:var(--sans);-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  .page{{width:{pw};min-height:{ph_min};margin:0 auto;padding:14mm 19mm 12mm;background:var(--paper);position:relative;display:flex;flex-direction:column}}
+  .page{{width:100%;padding:0;background:var(--paper);position:relative}}
+  thead{{display:table-header-group}}
+  tr{{break-inside:avoid}}
+  .total,.billing,.sums,.sign,.legal,.pay,footer{{break-inside:avoid}}
   .mono{{font-family:var(--mono);font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:400}}
   .dot{{color:var(--accent)}}
   .mast{{display:flex;justify-content:space-between;align-items:flex-start}}
@@ -149,6 +152,10 @@ def _page_css(theme: str, page_size: str) -> str:
   .total .mono::before{{content:"\\25CF";color:var(--accent);margin-right:3mm}}
   .total .big{{font-weight:500;font-size:33pt;letter-spacing:-.02em}}
   .pay{{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:4mm}}
+  .billing{{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:6mm;align-items:start}}
+  .bnote .mono{{margin-bottom:2.5mm}}
+  .bnote p{{font-size:8.3pt;line-height:1.55;color:var(--muted);white-space:pre-line}}
+  .totcol .sums{{margin-left:0;width:100%;margin-top:0}}
   .pay .mono{{margin-bottom:2.5mm}}
   .pay p{{font-size:8.3pt;line-height:1.55;white-space:pre-line}}
   .pay .note{{font-size:7pt;color:var(--muted);margin-top:1.5mm;white-space:pre-line}}
@@ -162,11 +169,11 @@ def _page_css(theme: str, page_size: str) -> str:
   .legal{{margin-top:6mm;padding:4mm 5mm;border:.5pt dashed var(--accent);border-radius:3mm;font-size:7.5pt;line-height:1.5;color:var(--muted)}}
   .sign{{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:12mm}}
   .sign .line{{border-top:.75pt solid var(--rule);padding-top:2mm;font-size:8pt;color:var(--muted)}}
-  footer{{margin-top:auto;padding-top:5mm}}
+  footer{{margin-top:10mm;padding-top:5mm}}
   footer .in{{display:flex;gap:6mm;align-items:baseline;border-top:.75pt solid var(--rule);padding-top:2.5mm;flex-wrap:wrap}}
   footer b{{font-weight:500;font-size:8pt}}
   footer .mono{{letter-spacing:.06em;text-transform:none}}
-  @page{{size:{pw} {ph};margin:0}}
+  @page{{size:{pw} {ph}}}
 """
 
 
@@ -215,15 +222,8 @@ def _financial_body(doc, d, currency):
     if tax.get("enabled"):
         tax_row = f'<div class="row"><span class="mono">{escape(tax.get("label","Tax"))}</span><span class="v">{fmt_money(t["tax"],currency)}</span></div>'
 
-    if is_receipt:
-        hero_right = f"""<div class="due"><div class="mono">Amount paid</div>
-          <div class="amt">{fmt_money(t['total'],currency)}</div>
-          <div class="paidstamp">PAID</div></div>"""
-        total_label = "Amount paid"
-    else:
-        hero_right = f"""<div class="due"><div class="mono">Amount due</div>
-          <div class="amt">{fmt_money(t['total'],currency)}</div></div>"""
-        total_label = "Total due"
+    hero_right = '<div class="paidstamp">PAID</div>' if is_receipt else ""
+    total_label = "Amount paid" if is_receipt else "Total due"
 
     due_block = "" if is_receipt else f"""<div class="mono">Due date</div><div class="val">{escape(d.get('due_date',''))}</div>"""
     pay_second = ""
@@ -259,11 +259,17 @@ def _financial_body(doc, d, currency):
   <table><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
     <thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
     <tbody>{rows}</tbody></table>
-  <div class="sums">
-    <div class="row"><span class="mono">Subtotal</span><span class="v">{fmt_money(t['subtotal'],currency)}</span></div>
-    {disc_row}{tax_row}
+  <div class="billing">
+    <div class="bnote"><div class="mono">Billing note</div>
+      <p>{escape(d.get('billing_note','Professional services are billed separately from third-party subscriptions, domains and platform charges.'))}</p></div>
+    <div class="totcol">
+      <div class="sums">
+        <div class="row"><span class="mono">Subtotal</span><span class="v">{fmt_money(t['subtotal'],currency)}</span></div>
+        {disc_row}{tax_row}
+      </div>
+      <div class="total"><div class="mono">{total_label}</div><div class="big">{fmt_money(t['total'],currency)}</div></div>
+    </div>
   </div>
-  <div class="total"><div class="mono">{total_label}</div><div class="big">{fmt_money(t['total'],currency)}</div></div>
   <div class="pay">
     <div><div class="mono">Payment details</div><p>{escape(d.get('payment_details',''))}</p></div>
     {pay_second}

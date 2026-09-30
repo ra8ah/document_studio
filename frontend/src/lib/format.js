@@ -3,7 +3,7 @@ import {
   Sparkles, HeartHandshake, ScrollText, FileCheck2, Quote, Mail,
 } from "lucide-react";
 
-export const CURRENCIES = ["USD", "EUR", "GBP", "AED", "INR", "CAD", "AUD", "SGD", "JPY", "CHF", "SAR", "ZAR", "NZD"];
+export const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "CAD", "AUD", "SGD", "JPY", "CHF", "SAR", "ZAR", "NZD"];
 
 export function money(amount, currency = "USD") {
   const n = Number(amount) || 0;

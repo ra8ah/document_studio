@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
-const EMPTY = { name: "", company: "", email: "", phone: "", address: "", tax_id: "", currency: "USD", notes: "" };
+const EMPTY = { name: "", company: "", email: "", phone: "", address: "", tax_id: "", currency: "INR", notes: "" };
 
 export default function Clients() {
   const [clients, setClients] = useState([]);
