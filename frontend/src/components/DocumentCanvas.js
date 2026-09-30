@@ -122,6 +122,16 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           ))}
         </tbody>
       </table>
+      {editable && (
+        <button
+          type="button"
+          className="doc-add-row"
+          data-testid="canvas-add-line-item"
+          onClick={() => setRows((r) => [...r, { key: `r${Date.now()}-${Math.random()}`, description: "New service", sub: "Short description", qty: 1, rate: 0 }])}
+        >
+          + Add line item
+        </button>
+      )}
       <div className="sums">
         <div className="row"><span className="mono">Subtotal</span><span className="v">{money(totals.sub, currency)}</span></div>
         {discount?.enabled && <div className="row"><span className="mono">{discount.label || "Discount"}{discount.mode === "percent" ? ` (${discount.value}%)` : ""}</span><span className="v">− {money(totals.disc, currency)}</span></div>}

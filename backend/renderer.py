@@ -144,10 +144,10 @@ def _page_css(theme: str, page_size: str) -> str:
   .sums .row{{display:flex;justify-content:space-between;align-items:baseline;padding:2.6mm 0;border-bottom:.4pt solid var(--rule2)}}
   .sums .row:last-child{{border-bottom:0}}
   .sums .v{{font-weight:500;font-size:8.6pt}}
-  .total{{margin-top:6mm;background:var(--dark);color:var(--darktext);border-radius:5mm;display:flex;justify-content:space-between;align-items:center;padding:7mm 8mm}}
+  .total{{margin-top:6mm;background:var(--dark);color:var(--darktext);border-radius:5mm;display:flex;justify-content:space-between;align-items:center;padding:9mm 9mm}}
   .total .mono{{color:var(--darktext)}}
   .total .mono::before{{content:"\\25CF";color:var(--accent);margin-right:3mm}}
-  .total .big{{font-weight:500;font-size:26pt;letter-spacing:-.02em}}
+  .total .big{{font-weight:500;font-size:31pt;letter-spacing:-.02em}}
   .pay{{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:9mm}}
   .pay .mono{{margin-bottom:2.5mm}}
   .pay p{{font-size:8.3pt;line-height:1.55;white-space:pre-line}}

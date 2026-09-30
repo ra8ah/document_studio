@@ -59,10 +59,12 @@
 .doc-page .sums .row { display:flex; justify-content:space-between; align-items:baseline; padding:2.6mm 0; border-bottom:.4pt solid var(--rule2); }
 .doc-page .sums .row:last-child { border-bottom:0; }
 .doc-page .sums .v { font-weight:500; font-size:8.6pt; }
-.doc-page .total { margin-top:6mm; background:var(--dark); color:var(--darktext); border-radius:5mm; display:flex; justify-content:space-between; align-items:center; padding:7mm 8mm; }
+.doc-page .total { margin-top:6mm; background:var(--dark); color:var(--darktext); border-radius:5mm; display:flex; justify-content:space-between; align-items:center; padding:9mm 9mm; }
 .doc-page .total .mono { color:var(--darktext); }
 .doc-page .total .mono::before { content:"\25CF"; color:var(--accent); margin-right:3mm; }
-.doc-page .total .big { font-weight:500; font-size:26pt; letter-spacing:-.02em; }
+.doc-page .total .big { font-weight:500; font-size:31pt; letter-spacing:-.02em; }
+.doc-page .doc-add-row { margin-top:3mm; font-family:var(--mono); font-size:7.5pt; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:transparent; border:.75pt dashed var(--accent); border-radius:999px; padding:2mm 5mm; cursor:pointer; transition:background-color .2s ease; }
+.doc-page .doc-add-row:hover { background:var(--accent); color:#fff; }
 
 .doc-page .pay { display:grid; grid-template-columns:1fr 1fr; gap:10mm; margin-top:9mm; }
 .doc-page .pay .mono { margin-bottom:2.5mm; }
