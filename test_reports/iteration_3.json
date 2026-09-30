@@ -1,0 +1,22 @@
+{
+  "summary": "Verified the remove-line-item bug fix on the invoice document editor (INV-0009). Always-visible orange '×' remove buttons render one per row with data-testid='remove-line-item'. Clicking a row's remove button deletes the row, live Subtotal/Total recalculates (Amount due went ₹9,500 → ₹7,500 after removing a ₹2,000 row), save persists (reload keeps 7 rows). Add + remove flow works (8→7 rows, totals stable). Enlarged 'Total due' block renders. PDF export (export-pdf-a4) triggers a real download 'INV-0009.pdf' after opening the Export menu.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Header hint text still reads 'HOVER A ROW TO REMOVE' — since remove buttons are now always visible, consider updating the copy to reflect the new UX (e.g., 'CLICK × TO REMOVE A ROW')."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "Admin: bxibichvzpd@indogmail.com / Agency@Studio2026 (worked via /api/auth/login)",
+  "seed_data_creation": "None. Modified INV-0009 (doc id 6abd021db8793838a7a920f7): removed one line item as part of persistence verification (row count now 7 instead of 8).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Editor route /documents/{id}. Remove buttons: [data-testid='remove-line-item'] (multiple, one per line-item row, always visible). Add-row: [data-testid='canvas-add-line-item']. Save: [data-testid='save-document-button']. Export menu must be opened via 'Export' button (get_by_role('button', name='Export')) before [data-testid='export-pdf-a4'] becomes available. Login testids: login-email-input, login-password-input, login-submit-button. INV-0009 doc id = 6abd021db8793838a7a920f7 and currently has 7 line items after this run.",
+  "rca of the issue": "N/A — fix verified working. Previous hover-only + clipped remove control replaced by always-rendered accent '×' button positioned outside the row cell, no longer clipped by overflow."
+}

@@ -189,7 +189,7 @@ export default function DocumentEditor() {
               <Input className="w-28 h-8" value={tax.label} onChange={(e) => setTax((t) => ({ ...t, label: e.target.value }))} placeholder="Label (GST/VAT)" />
             </>)}
           </div>
-          <span className="mono-label self-center ml-auto text-muted-foreground">Click any text on the page to edit · hover a row to remove</span>
+          <span className="mono-label self-center ml-auto text-muted-foreground">Click any text on the page to edit · click × to remove a row</span>
         </div>
       )}
 
