@@ -83,9 +83,9 @@ LEGAL_NOTE_TYPES = {"service_agreement", "nda", "statement_of_work"}
 
 def _page_css(theme: str, page_size: str) -> str:
     if page_size == "Letter":
-        pw, ph = "216mm", "279mm"
+        pw, ph, ph_min = "216mm", "279mm", "272mm"
     else:
-        pw, ph = "210mm", "297mm"
+        pw, ph, ph_min = "210mm", "297mm", "290mm"
     if theme == "dark":
         v = {
             "paper": "#1C1815", "text": "#F2ECE0", "dark": "#2C2824", "darktext": "#F2ECE0",
@@ -107,7 +107,7 @@ def _page_css(theme: str, page_size: str) -> str:
   }}
   *{{box-sizing:border-box;margin:0;padding:0}}
   html,body{{background:var(--paper);color:var(--text);font-family:var(--sans);-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  .page{{width:{pw};min-height:{ph};margin:0 auto;padding:14mm 19mm 12mm;background:var(--paper);position:relative;display:flex;flex-direction:column}}
+  .page{{width:{pw};min-height:{ph_min};margin:0 auto;padding:14mm 19mm 12mm;background:var(--paper);position:relative;display:flex;flex-direction:column}}
   .mono{{font-family:var(--mono);font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:400}}
   .dot{{color:var(--accent)}}
   .mast{{display:flex;justify-content:space-between;align-items:flex-start}}
@@ -117,38 +117,38 @@ def _page_css(theme: str, page_size: str) -> str:
   .tag{{margin-top:4px}}
   .docno{{font-family:var(--mono);font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:right}}
   .docno b{{color:var(--accent);font-weight:600}}
-  .hero{{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14mm;padding-bottom:5mm;border-bottom:.75pt solid var(--rule)}}
+  .hero{{display:flex;justify-content:space-between;align-items:flex-end;margin-top:8mm;padding-bottom:5mm;border-bottom:.75pt solid var(--rule)}}
   h1{{font-weight:500;font-size:52pt;line-height:.95;letter-spacing:-.045em}}
   .hero .sub{{font-size:9pt;color:var(--muted);max-width:70mm;text-align:right}}
   .due{{text-align:right}}
   .due .amt{{font-weight:500;font-size:27pt;letter-spacing:-.02em;color:var(--accent);margin-top:2mm}}
   .paidstamp{{display:inline-block;margin-top:3mm;border:1.5pt solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:9pt;letter-spacing:.2em;padding:2mm 4mm;border-radius:2mm;transform:rotate(-4deg)}}
-  .parties{{display:grid;grid-template-columns:1.05fr 1.1fr .95fr;gap:8mm;padding:7mm 0 6mm}}
+  .parties{{display:grid;grid-template-columns:1.05fr 1.1fr .95fr;gap:8mm;padding:3mm 0 3mm}}
   .parties .mono{{margin-bottom:2.5mm}}
   .parties .name{{font-weight:500;font-size:10.5pt}}
   .parties .sub{{font-size:8pt;color:var(--muted);margin-top:1mm;white-space:pre-line}}
   .parties .val{{font-weight:500;font-size:9pt}}
   .parties .val + .mono{{margin-top:4mm}}
-  .project{{display:grid;grid-template-columns:40mm 1fr;align-items:center;padding:3mm 0;border-top:.4pt solid var(--rule2)}}
+  .project{{display:grid;grid-template-columns:40mm 1fr;align-items:center;padding:2mm 0;border-top:.4pt solid var(--rule2)}}
   .project .v{{font-weight:500;font-size:9pt}}
-  table{{width:100%;border-collapse:collapse;margin-top:6mm}}
+  table{{width:100%;border-collapse:collapse;margin-top:4mm}}
   th{{font-family:var(--mono);font-weight:400;font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:right;padding:0 0 2.5mm;border-bottom:.75pt solid var(--rule)}}
   th:first-child,td:first-child{{text-align:left}}
-  td{{padding:3mm 0 2.6mm;vertical-align:top;border-bottom:.4pt solid var(--rule2);font-size:8.6pt;text-align:right}}
+  td{{padding:1.7mm 0 1.5mm;vertical-align:top;border-bottom:.4pt solid var(--rule2);font-size:8.6pt;text-align:right}}
   td:first-child{{padding-right:6mm}}
   td .d{{font-weight:500;font-size:9pt;display:block}}
   td .s{{font-size:7pt;color:var(--muted);margin-top:.8mm;display:block}}
   col.c2{{width:14mm}} col.c3{{width:30mm}} col.c4{{width:32mm}}
   td.amount{{font-weight:500}}
   .sums{{margin-left:auto;width:78mm;margin-top:1mm}}
-  .sums .row{{display:flex;justify-content:space-between;align-items:baseline;padding:2.6mm 0;border-bottom:.4pt solid var(--rule2)}}
+  .sums .row{{display:flex;justify-content:space-between;align-items:baseline;padding:2mm 0;border-bottom:.4pt solid var(--rule2)}}
   .sums .row:last-child{{border-bottom:0}}
   .sums .v{{font-weight:500;font-size:8.6pt}}
-  .total{{margin-top:6mm;background:var(--dark);color:var(--darktext);border-radius:5mm;display:flex;justify-content:space-between;align-items:center;padding:9mm 9mm}}
+  .total{{margin-top:4mm;background:var(--dark);color:var(--darktext);border-radius:5mm;display:flex;justify-content:space-between;align-items:center;padding:5.5mm 9mm}}
   .total .mono{{color:var(--darktext)}}
   .total .mono::before{{content:"\\25CF";color:var(--accent);margin-right:3mm}}
-  .total .big{{font-weight:500;font-size:31pt;letter-spacing:-.02em}}
-  .pay{{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:9mm}}
+  .total .big{{font-weight:500;font-size:29pt;letter-spacing:-.02em}}
+  .pay{{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:5mm}}
   .pay .mono{{margin-bottom:2.5mm}}
   .pay p{{font-size:8.3pt;line-height:1.55;white-space:pre-line}}
   .pay .note{{font-size:7pt;color:var(--muted);margin-top:1.5mm;white-space:pre-line}}
@@ -162,7 +162,7 @@ def _page_css(theme: str, page_size: str) -> str:
   .legal{{margin-top:6mm;padding:4mm 5mm;border:.5pt dashed var(--accent);border-radius:3mm;font-size:7.5pt;line-height:1.5;color:var(--muted)}}
   .sign{{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:12mm}}
   .sign .line{{border-top:.75pt solid var(--rule);padding-top:2mm;font-size:8pt;color:var(--muted)}}
-  footer{{margin-top:auto;padding-top:14mm}}
+  footer{{margin-top:auto;padding-top:6mm}}
   footer .in{{display:flex;gap:6mm;align-items:baseline;border-top:.75pt solid var(--rule);padding-top:2.5mm;flex-wrap:wrap}}
   footer b{{font-weight:500;font-size:8pt}}
   footer .mono{{letter-spacing:.06em;text-transform:none}}

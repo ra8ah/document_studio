@@ -2,12 +2,12 @@
 .doc-wrap { --sans:'Poppins','Helvetica Neue',Arial,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace; }
 
 .doc-page {
-  width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm 19mm 12mm;
+  width: 210mm; min-height: 290mm; margin: 0 auto; padding: 14mm 19mm 12mm;
   position: relative; display: flex; flex-direction: column;
   font-family: var(--sans); box-shadow: 0 30px 80px -30px rgba(0,0,0,.45);
   transition: background-color .3s ease, color .3s ease;
 }
-.doc-page.letter { width: 216mm; min-height: 279mm; }
+.doc-page.letter { width: 216mm; min-height: 272mm; }
 
 .doc-light { --paper:#F2ECE0; --text:#201C18; --dark:#2C2824; --darktext:#F2ECE0; --accent:#C04C20; --muted:#78746C; --rule:#201C18; --rule2:rgba(120,116,108,.6); }
 .doc-dark  { --paper:#1C1815; --text:#F2ECE0; --dark:#2C2824; --darktext:#F2ECE0; --accent:#E0673B; --muted:#A8A29A; --rule:rgba(242,236,224,.9); --rule2:rgba(168,162,154,.4); }
@@ -27,26 +27,26 @@
 .doc-page .docno { font-family:var(--mono); font-size:7.5pt; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); text-align:right; }
 .doc-page .docno b { color:var(--accent); font-weight:600; }
 
-.doc-page .hero { display:flex; justify-content:space-between; align-items:flex-end; margin-top:14mm; padding-bottom:5mm; border-bottom:.75pt solid var(--rule); }
+.doc-page .hero { display:flex; justify-content:space-between; align-items:flex-end; margin-top:8mm; padding-bottom:5mm; border-bottom:.75pt solid var(--rule); }
 .doc-page h1 { font-weight:500; font-size:52pt; line-height:.95; letter-spacing:-.045em; }
 .doc-page .hero .sub { font-size:9pt; color:var(--muted); max-width:70mm; text-align:right; }
 .doc-page .due { text-align:right; }
 .doc-page .due .amt { font-weight:500; font-size:27pt; letter-spacing:-.02em; color:var(--accent); margin-top:2mm; }
 .doc-page .paidstamp { display:inline-block; margin-top:3mm; border:1.5pt solid var(--accent); color:var(--accent); font-family:var(--mono); font-size:9pt; letter-spacing:.2em; padding:2mm 4mm; border-radius:2mm; transform:rotate(-4deg); }
 
-.doc-page .parties { display:grid; grid-template-columns:1.05fr 1.1fr .95fr; gap:8mm; padding:7mm 0 6mm; }
+.doc-page .parties { display:grid; grid-template-columns:1.05fr 1.1fr .95fr; gap:8mm; padding:3mm 0 3mm; }
 .doc-page .parties .mono { margin-bottom:2.5mm; }
 .doc-page .parties .name { font-weight:500; font-size:10.5pt; }
 .doc-page .parties .sub { font-size:8pt; color:var(--muted); margin-top:1mm; white-space:pre-line; }
 .doc-page .parties .val { font-weight:500; font-size:9pt; }
 .doc-page .parties .val + .mono { margin-top:4mm; }
-.doc-page .project { display:grid; grid-template-columns:40mm 1fr; align-items:center; padding:3mm 0; border-top:.4pt solid var(--rule2); }
+.doc-page .project { display:grid; grid-template-columns:40mm 1fr; align-items:center; padding:2mm 0; border-top:.4pt solid var(--rule2); }
 .doc-page .project .v { font-weight:500; font-size:9pt; }
 
-.doc-page table { width:100%; border-collapse:collapse; margin-top:6mm; }
+.doc-page table { width:100%; border-collapse:collapse; margin-top:4mm; }
 .doc-page th { font-family:var(--mono); font-weight:400; font-size:7.5pt; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); text-align:right; padding:0 0 2.5mm; border-bottom:.75pt solid var(--rule); }
 .doc-page th:first-child, .doc-page td:first-child { text-align:left; }
-.doc-page td { padding:3mm 0 2.6mm; vertical-align:top; border-bottom:.4pt solid var(--rule2); font-size:8.6pt; text-align:right; position:relative; }
+.doc-page td { padding:1.7mm 0 1.5mm; vertical-align:top; border-bottom:.4pt solid var(--rule2); font-size:8.6pt; text-align:right; position:relative; }
 .doc-page td:first-child { padding-right:6mm; }
 .doc-page td .d { font-weight:500; font-size:9pt; display:block; }
 .doc-page td .s { font-size:7pt; color:var(--muted); margin-top:.8mm; display:block; }
@@ -56,17 +56,17 @@
 .doc-page tr:hover .rm { display:block; }
 
 .doc-page .sums { margin-left:auto; width:78mm; margin-top:1mm; }
-.doc-page .sums .row { display:flex; justify-content:space-between; align-items:baseline; padding:2.6mm 0; border-bottom:.4pt solid var(--rule2); }
+.doc-page .sums .row { display:flex; justify-content:space-between; align-items:baseline; padding:2mm 0; border-bottom:.4pt solid var(--rule2); }
 .doc-page .sums .row:last-child { border-bottom:0; }
 .doc-page .sums .v { font-weight:500; font-size:8.6pt; }
-.doc-page .total { margin-top:6mm; background:var(--dark); color:var(--darktext); border-radius:5mm; display:flex; justify-content:space-between; align-items:center; padding:9mm 9mm; }
+.doc-page .total { margin-top:4mm; background:var(--dark); color:var(--darktext); border-radius:5mm; display:flex; justify-content:space-between; align-items:center; padding:5.5mm 9mm; }
 .doc-page .total .mono { color:var(--darktext); }
 .doc-page .total .mono::before { content:"\25CF"; color:var(--accent); margin-right:3mm; }
-.doc-page .total .big { font-weight:500; font-size:31pt; letter-spacing:-.02em; }
+.doc-page .total .big { font-weight:500; font-size:29pt; letter-spacing:-.02em; }
 .doc-page .doc-add-row { margin-top:3mm; font-family:var(--mono); font-size:7.5pt; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:transparent; border:.75pt dashed var(--accent); border-radius:999px; padding:2mm 5mm; cursor:pointer; transition:background-color .2s ease; }
 .doc-page .doc-add-row:hover { background:var(--accent); color:#fff; }
 
-.doc-page .pay { display:grid; grid-template-columns:1fr 1fr; gap:10mm; margin-top:9mm; }
+.doc-page .pay { display:grid; grid-template-columns:1fr 1fr; gap:10mm; margin-top:5mm; }
 .doc-page .pay .mono { margin-bottom:2.5mm; }
 .doc-page .pay p { font-size:8.3pt; line-height:1.55; white-space:pre-line; }
 .doc-page .pay .note { font-size:7pt; color:var(--muted); margin-top:1.5mm; white-space:pre-line; }
@@ -83,7 +83,7 @@
 .doc-page .sign .line { border-top:.75pt solid var(--rule); padding-top:2mm; font-size:8pt; color:var(--muted); }
 .doc-page .secrm { margin-left:8px; border:0; background:transparent; color:var(--accent); cursor:pointer; font-family:var(--mono); font-size:7pt; }
 
-.doc-page footer { margin-top:auto; padding-top:14mm; }
+.doc-page footer { margin-top:auto; padding-top:6mm; }
 .doc-page footer .in { display:flex; gap:6mm; align-items:baseline; border-top:.75pt solid var(--rule); padding-top:2.5mm; flex-wrap:wrap; }
 .doc-page footer b { font-weight:500; font-size:8pt; }
 .doc-page footer .mono { letter-spacing:.06em; text-transform:none; }
