@@ -52,21 +52,21 @@
 .doc-page td .s { font-size:7pt; color:var(--muted); margin-top:.8mm; display:block; }
 .doc-page col.c2 { width:14mm; } .doc-page col.c3 { width:30mm; } .doc-page col.c4 { width:32mm; }
 .doc-page td.amount { font-weight:500; }
-.doc-page .rm { position:absolute; left:-7mm; top:3.2mm; width:5mm; height:5mm; border:0; border-radius:50%; background:var(--dark); color:var(--darktext); font-size:9pt; line-height:5mm; cursor:pointer; display:none; padding:0; }
-.doc-page tr:hover .rm { display:block; }
+.doc-page .rm { position:absolute; left:-8mm; top:2.4mm; width:5.5mm; height:5.5mm; border:0; border-radius:50%; background:var(--accent); color:#fff; font-size:11pt; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:transform .15s ease; }
+.doc-page .rm:hover { transform:scale(1.18); }
 
 .doc-page .sums { margin-left:auto; width:78mm; margin-top:1mm; }
 .doc-page .sums .row { display:flex; justify-content:space-between; align-items:baseline; padding:2mm 0; border-bottom:.4pt solid var(--rule2); }
 .doc-page .sums .row:last-child { border-bottom:0; }
 .doc-page .sums .v { font-weight:500; font-size:8.6pt; }
-.doc-page .total { margin-top:4mm; background:var(--dark); color:var(--darktext); border-radius:5mm; display:flex; justify-content:space-between; align-items:center; padding:5.5mm 9mm; }
+.doc-page .total { margin-top:4mm; background:var(--dark); color:var(--darktext); border-radius:5mm; display:flex; justify-content:space-between; align-items:center; padding:7mm 9mm; }
 .doc-page .total .mono { color:var(--darktext); }
 .doc-page .total .mono::before { content:"\25CF"; color:var(--accent); margin-right:3mm; }
-.doc-page .total .big { font-weight:500; font-size:29pt; letter-spacing:-.02em; }
+.doc-page .total .big { font-weight:500; font-size:33pt; letter-spacing:-.02em; }
 .doc-page .doc-add-row { margin-top:3mm; font-family:var(--mono); font-size:7.5pt; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:transparent; border:.75pt dashed var(--accent); border-radius:999px; padding:2mm 5mm; cursor:pointer; transition:background-color .2s ease; }
 .doc-page .doc-add-row:hover { background:var(--accent); color:#fff; }
 
-.doc-page .pay { display:grid; grid-template-columns:1fr 1fr; gap:10mm; margin-top:5mm; }
+.doc-page .pay { display:grid; grid-template-columns:1fr 1fr; gap:10mm; margin-top:4mm; }
 .doc-page .pay .mono { margin-bottom:2.5mm; }
 .doc-page .pay p { font-size:8.3pt; line-height:1.55; white-space:pre-line; }
 .doc-page .pay .note { font-size:7pt; color:var(--muted); margin-top:1.5mm; white-space:pre-line; }
@@ -83,7 +83,7 @@
 .doc-page .sign .line { border-top:.75pt solid var(--rule); padding-top:2mm; font-size:8pt; color:var(--muted); }
 .doc-page .secrm { margin-left:8px; border:0; background:transparent; color:var(--accent); cursor:pointer; font-family:var(--mono); font-size:7pt; }
 
-.doc-page footer { margin-top:auto; padding-top:6mm; }
+.doc-page footer { margin-top:auto; padding-top:5mm; }
 .doc-page footer .in { display:flex; gap:6mm; align-items:baseline; border-top:.75pt solid var(--rule); padding-top:2.5mm; flex-wrap:wrap; }
 .doc-page footer b { font-weight:500; font-size:8pt; }
 .doc-page footer .mono { letter-spacing:.06em; text-transform:none; }

@@ -1,0 +1,23 @@
+{
+  "summary": "Regression test for recent UI edits (inline canvas '+ Add line item' button, enlarged totals, tightened spacing). Backend regression suite ran green (23/23). Frontend editor flows all verified: canvas-add-line-item adds a new editable row (rows 8 -> 10 on INV-0009), live Subtotal/Total updates correctly on qty*rate change (\u20b99,500 -> \u20b910,250 after adding qty=3, rate=250 line), Save persists after reload, Share and toolbar Line item / Export / Save buttons all present, and Export menu renders PDF\u00b7A4 / PDF\u00b7US Letter / Word\u00b7DOCX. Backend PDF (A4 & Letter) and DOCX endpoints all return valid file signatures. Indian currency grouping (\u20b910,250.00) works with INR selected.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "DocumentCanvas uses contentEditable td cells for qty/rate rather than <input>; works but adds no data-testid per row. Fine for now, but for more granular Playwright targeting consider adding data-testid on each qty/rate cell (e.g. data-testid=line-qty-{idx}).",
+    "canvas-add-line-item pushes a row with rate=0 and description 'New service' — matches expectation; recalc via onInput on <table> fires and updates totals correctly."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (23/23)", "frontend": "100% of retested flows"},
+  "test_credentials": "bxibichvzpd@indogmail.com / Agency@Studio2026 (admin)",
+  "seed_data_creation": "Modified existing invoice 6abd021db8793838a7a920f7 (INV-0009): added 2 new rows via canvas-add-line-item, filled qty=3 rate=250 on last, saved. Total now \u20b910,250.00. Prior TEST_ClientA / test docs from iteration 1 still in DB.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Existing invoices with line items available (INV-0001..INV-0009). Editor route is /documents/{id}. Canvas rows use contentEditable td.qty / td.rate cells (no per-row data-testid). Toolbar buttons: add-line-item-button, save-document-button, share-button, currency-select. Export menu: export-pdf-a4, export-pdf-letter, export-docx. Backend regression: pytest backend/tests/backend_test.py -v.",
+  "rca of the issue": "N/A \u2014 no defects found."
+}

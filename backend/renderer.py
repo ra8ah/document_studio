@@ -144,11 +144,11 @@ def _page_css(theme: str, page_size: str) -> str:
   .sums .row{{display:flex;justify-content:space-between;align-items:baseline;padding:2mm 0;border-bottom:.4pt solid var(--rule2)}}
   .sums .row:last-child{{border-bottom:0}}
   .sums .v{{font-weight:500;font-size:8.6pt}}
-  .total{{margin-top:4mm;background:var(--dark);color:var(--darktext);border-radius:5mm;display:flex;justify-content:space-between;align-items:center;padding:5.5mm 9mm}}
+  .total{{margin-top:4mm;background:var(--dark);color:var(--darktext);border-radius:5mm;display:flex;justify-content:space-between;align-items:center;padding:7mm 9mm}}
   .total .mono{{color:var(--darktext)}}
   .total .mono::before{{content:"\\25CF";color:var(--accent);margin-right:3mm}}
-  .total .big{{font-weight:500;font-size:29pt;letter-spacing:-.02em}}
-  .pay{{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:5mm}}
+  .total .big{{font-weight:500;font-size:33pt;letter-spacing:-.02em}}
+  .pay{{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:4mm}}
   .pay .mono{{margin-bottom:2.5mm}}
   .pay p{{font-size:8.3pt;line-height:1.55;white-space:pre-line}}
   .pay .note{{font-size:7pt;color:var(--muted);margin-top:1.5mm;white-space:pre-line}}
@@ -162,7 +162,7 @@ def _page_css(theme: str, page_size: str) -> str:
   .legal{{margin-top:6mm;padding:4mm 5mm;border:.5pt dashed var(--accent);border-radius:3mm;font-size:7.5pt;line-height:1.5;color:var(--muted)}}
   .sign{{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:12mm}}
   .sign .line{{border-top:.75pt solid var(--rule);padding-top:2mm;font-size:8pt;color:var(--muted)}}
-  footer{{margin-top:auto;padding-top:6mm}}
+  footer{{margin-top:auto;padding-top:5mm}}
   footer .in{{display:flex;gap:6mm;align-items:baseline;border-top:.75pt solid var(--rule);padding-top:2.5mm;flex-wrap:wrap}}
   footer b{{font-weight:500;font-size:8pt}}
   footer .mono{{letter-spacing:.06em;text-transform:none}}

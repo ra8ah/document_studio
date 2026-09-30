@@ -111,7 +111,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           {rows.map((it) => (
             <tr key={it.key} data-row>
               <td>
-                {editable && <button type="button" className="rm" onClick={() => { setRows((r) => r.filter((x) => x.key !== it.key)); }}>×</button>}
+                {editable && <button type="button" className="rm" title="Remove line item" data-testid="remove-line-item" onClick={() => { setRows((r) => r.filter((x) => x.key !== it.key)); }}>×</button>}
                 <span className="d" contentEditable={editable} suppressContentEditableWarning>{it.description}</span>
                 <span className="s" contentEditable={editable} suppressContentEditableWarning>{it.sub}</span>
               </td>
