@@ -1,0 +1,29 @@
+{
+  "summary": "Iteration 4 validated the invoice editor redesign (removed top Amount-due, new bottom Billing/Subtotal/TOTAL DUE/Payment sections), INR default currency, live add/remove line items, save persistence, and PDF A4 export. Backend pytest suite = 23/23 passing. Frontend flows tested end-to-end on the live preview URL and all assertions passed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Cosmetic (P3): The billing-note editable <p> has no data-testid. Consider adding data-testid=\"billing-note-input\" for stable automated testing.",
+    "Cosmetic (P3): Header caption already updated ('CLICK ANY TEXT ON THE PAGE TO EDIT · CLICK × TO REMOVE A ROW') — good; ignore previous iteration comment.",
+    "Note: /api/profile default_currency drives new-invoice currency. Backend pytest (test_get_and_update) sets default_currency to 'USD' as part of the update round-trip; testing agent reset it back to 'INR' after the run. If UI expects the app to always default to INR without profile influence, consider seeding default_currency='INR' on install/reset, or restore the previous value in the test."
+  ],
+  "critical_code_review_comments": [
+    "TestProfile.test_get_and_update in /app/backend/tests/backend_test.py mutates profile.default_currency to 'USD' and does not restore it. This can leak into subsequent frontend tests (new invoices then default to USD instead of INR). Recommend a teardown that restores the original currency, or asserting round-trip without persisting non-INR."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (23/23)", "frontend": "100%"},
+  "test_credentials": "Admin: bxibichvzpd@indogmail.com / Agency@Studio2026 (works, cookie auth + Bearer token both fine)",
+  "seed_data_creation": "Two throw-away invoices were created via UI (INV-0017 doc 6abd0a71abd76a90c422f55c, INV-0018 doc 6abd0a9aabd76a90c422f55d) and DELETED at end. Profile default_currency was changed to USD by pytest and then restored to INR by the testing agent.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Editor route /documents/{id}. Verified elements: hero shows only 'Invoice.' (no top amount block). Bottom row has 'BILLING NOTE' (left, contenteditable <p>) + 'SUBTOTAL' (right) + large dark 'TOTAL DUE ₹...' block + 'PAYMENT DETAILS' / 'PAYMENT TERMS' below. Add row: [data-testid='canvas-add-line-item']. Remove row: [data-testid='remove-line-item'] (multiple). Save: [data-testid='save-document-button']. Currency dropdown: [data-testid='currency-select']. Export flow: click role=button name='Export' first, then [data-testid='export-pdf-a4']. Login: login-email-input / login-password-input / login-submit-button. Post-login lands on '/' (dashboard), not '/dashboard' — use wait_for_load_state('networkidle') rather than wait_for_url('**/dashboard**').",
+  "rca of the issue": "No blocking issues. Initial run appeared to fail INR-default check because /api/profile.default_currency was left as 'USD' by pytest; after restoring profile to INR, a freshly-created invoice correctly defaulted to INR with ₹ Indian-grouping formatting."
+}
