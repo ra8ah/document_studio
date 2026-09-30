@@ -591,4 +591,5 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
+    await pdf_export.shutdown()
     client.close()
