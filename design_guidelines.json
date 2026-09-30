@@ -1,0 +1,105 @@
+{
+  "project_name": "Digital Agency Document Studio & Operations Engine",
+  "archetype": "Organic & Swiss Editorial Fusion",
+  "vibe": "Modern, Sharp, Confident, Minimal, Premium, Technical, Trustworthy",
+  "prohibited_words": ["freelancer", "solo", "freelancing", "indie"],
+  "theme": {
+    "default_mode": "light_cream",
+    "supported_modes": ["light_cream", "app_dark"],
+    "colors": {
+      "cream": "#F2ECE0",
+      "cream_surface": "#EAE3D5",
+      "cream_border": "#DCD3C1",
+      "ink": "#201C18",
+      "ink_muted": "#524E48",
+      "dark": "#2C2824",
+      "dark_card": "#221E1B",
+      "dark_border": "#3A3530",
+      "accent": "#C04C20",
+      "accent_hover": "#A63D17",
+      "accent_light": "rgba(192, 76, 32, 0.1)",
+      "muted": "#78746C",
+      "muted_light": "#B4B0A6",
+      "status": {
+        "paid": "#2E6B48",
+        "pending": "#D97706",
+        "overdue": "#C04C20",
+        "draft": "#78746C"
+      }
+    }
+  },
+  "typography": {
+    "primary_font": "Poppins, sans-serif",
+    "mono_font": "'IBM Plex Mono', monospace",
+    "headline_rule": "Headlines MUST be large, tightly spaced (-0.03em tracking). Two-tone structure: primary statement in dark ink (#201C18) followed by a secondary qualifier in muted gray (#78746C), ending with a single accent orange-red full stop (#C04C20) or question mark.",
+    "headline_example": "<h1 className='font-sans font-bold text-4xl sm:text-5xl text-[#201C18] tracking-tight'>Streamlined Documents <span className='text-[#78746C] font-normal'>for modern studio operations</span><span className='text-[#C04C20]'>.</span></h1>",
+    "section_label_rule": "All section headers, widgets, and field titles MUST use monospaced uppercase labels formatted like '... / 01' or '[01 / DASHBOARD]'.",
+    "section_label_example": "<span className='font-mono text-xs uppercase tracking-widest text-[#78746C] font-semibold'>OVERVIEW / 01</span>",
+    "scale": {
+      "h1": "text-4xl sm:text-5xl font-bold tracking-tight leading-[1.08]",
+      "h2": "text-2xl sm:text-3xl font-semibold tracking-tight leading-snug",
+      "h3": "text-xl sm:text-2xl font-semibold tracking-tight",
+      "h4": "text-lg font-medium",
+      "body": "text-base leading-relaxed text-[#201C18]",
+      "body_small": "text-sm leading-normal text-[#524E48]",
+      "mono_label": "font-mono text-xs uppercase tracking-[0.18em] text-[#78746C]"
+    }
+  },
+  "layout_and_spacing": {
+    "container_padding": "p-6 sm:p-10 lg:p-12",
+    "grid_gap": "gap-6 sm:gap-8",
+    "border_style": "1px solid thin rules (border-[#201C18]/15 or border-[#2C2824]/20)",
+    "cards": "Dark rounded cards (bg-[#2C2824] text-[#F2ECE0] rounded-2xl p-6 shadow-xl) or Cream elevated cards (bg-[#F2ECE0] border border-[#201C18]/15 rounded-2xl p-6)",
+    "buttons": "Dark pill buttons (bg-[#201C18] hover:bg-[#2C2824] text-[#F2ECE0] rounded-full px-6 py-2.5 font-medium text-sm transition-all duration-200) or Accent pill buttons (bg-[#C04C20] hover:bg-[#A63D17] text-white rounded-full px-6 py-2.5)"
+  },
+  "document_types": [
+    { "id": "invoice", "name": "Invoice", "code": "INV", "desc": "Tax invoice with line items, tax rates, payment status, and bank details." },
+    { "id": "quotation", "name": "Quotation / Estimate", "code": "EST", "desc": "Project cost estimate with line-item breakdowns and acceptance terms." },
+    { "id": "proposal", "name": "Proposal", "code": "PROP", "desc": "Comprehensive agency proposal including scope, timeline, deliverables, and fee structure." },
+    { "id": "statement_of_work", "name": "Statement of Work", "code": "SOW", "desc": "Detailed technical SOW outlining project milestones, responsibilities, and acceptance criteria." },
+    { "id": "service_agreement", "name": "Service Agreement", "code": "MSA", "desc": "Master service agreement outlining legally binding terms, payment schedules, and liability." },
+    { "id": "nda", "name": "Non-Disclosure Agreement", "code": "NDA", "desc": "Mutual or unilateral NDA for client initial discussions and confidential disclosures." },
+    { "id": "receipt", "name": "Payment Receipt", "code": "REC", "desc": "Official proof of payment for completed invoices or retainers." },
+    { "id": "project_status", "name": "Project Status Report", "code": "PSR", "desc": "Executive status update covering progress, completed milestones, blockers, and next steps." },
+    { "id": "maintenance_plan", "name": "Maintenance & Support Plan", "code": "MSP", "desc": "Retainer contract detailing monthly SLA, included hours, and support tiers." },
+    { "id": "welcome_doc", "name": "Welcome Document", "code": "WEL", "desc": "Client onboarding guide detailing communication channels, key contacts, and tools." },
+    { "id": "thank_you_doc", "name": "Thank-You Document", "code": "TYD", "desc": "Post-project handover note with feedback request and ongoing maintenance options." },
+    { "id": "letterhead", "name": "Official Letterhead", "code": "LTR", "desc": "Standard agency letterhead template for official correspondence and formal notices." }
+  ],
+  "document_engine_specs": {
+    "paper_variants": ["light_cream", "dark_obsidian"],
+    "paper_styles": {
+      "light_cream": "bg-[#F2ECE0] text-[#201C18] border border-[#201C18]/15 shadow-2xl font-sans p-10 sm:p-14",
+      "dark_obsidian": "bg-[#1C1815] text-[#F2ECE0] border border-[#3A3530] shadow-2xl font-sans p-10 sm:p-14"
+    },
+    "totals_block_style": "bg-[#2C2824] text-[#F2ECE0] p-6 rounded-xl border border-[#3A3530]",
+    "inline_editing": "Live click-to-edit fields on document canvas with hover subtle outline and instant update",
+    "pdf_export": "Uses window.print() CSS page media @media print formatted for standard A4 / Letter document sizes with zero margins and full color backdrops"
+  },
+  "key_components": {
+    "command_palette": "Triggered via Cmd+K or search pill in top bar. Displays quick actions: 'New Invoice', 'New Proposal', 'Search Clients', 'View Unpaid Invoices'.",
+    "dashboard_stats": "4 metrics cards (This Month Revenue, Total Outstanding, Unpaid Invoices Count, Overdue Alerts) styled as dark rounded cards with accent numerical highlights.",
+    "clients_manager": "Full CRUD client directory with quick search, multi-currency settings, default billing address, contact person, and document history.",
+    "business_profile_settings": "Agency branding settings: agency name, logo upload/URL, registration number, VAT/Tax ID, address, payment details, default currency, signature line."
+  },
+  "testing_attributes": {
+    "rule": "ALL interactive components (buttons, inputs, links, tabs, dialog triggers, actions) MUST include data-testid in kebab-case format.",
+    "examples": [
+      "data-testid='command-palette-button'",
+      "data-testid='create-document-button'",
+      "data-testid='document-type-card-invoice'",
+      "data-testid='inline-edit-client-name'",
+      "data-testid='add-line-item-button'",
+      "data-testid='export-pdf-button'",
+      "data-testid='export-csv-button'",
+      "data-testid='client-search-input'",
+      "data-testid='login-submit-button'"
+    ]
+  },
+  "image_assets": {
+    "agency_sign": "https://images.unsplash.com/photo-1781615852364-d66b3fa0d4ea?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "minimal_desk": "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "macbook_workspace": "https://images.unsplash.com/photo-1535957998253-26ae1ef29506?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "instructions_to_main_agent": "Ensure all React component files use .js extension. Load Poppins and IBM Plex Mono fonts via Google Fonts in index.html. Apply two-tone Poppins titles with orange-red terminal punctuation across all hero sections. Maintain strict contrast and use data-testid on every interactive element."
+}

@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 39 39% 91%;
+    --foreground: 30 15% 11%;
+    --card: 38 34% 88%;
+    --card-foreground: 30 15% 11%;
+    --popover: 39 42% 93%;
+    --popover-foreground: 30 15% 11%;
+    --primary: 30 15% 11%;
+    --primary-foreground: 39 39% 91%;
+    --secondary: 38 24% 85%;
+    --secondary-foreground: 30 15% 11%;
+    --muted: 38 20% 84%;
+    --muted-foreground: 40 6% 42%;
+    --accent: 15 71% 44%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 15 71% 44%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 33 18% 78%;
+    --input: 33 18% 78%;
+    --ring: 15 71% 44%;
+    --radius: 0.85rem;
+  }
+  .dark {
+    --background: 30 12% 10%;
+    --foreground: 39 39% 91%;
+    --card: 30 11% 14%;
+    --card-foreground: 39 39% 91%;
+    --popover: 30 11% 13%;
+    --popover-foreground: 39 39% 91%;
+    --primary: 39 39% 91%;
+    --primary-foreground: 30 15% 11%;
+    --secondary: 30 9% 20%;
+    --secondary-foreground: 39 39% 91%;
+    --muted: 30 8% 20%;
+    --muted-foreground: 40 8% 62%;
+    --accent: 15 78% 54%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 15 78% 54%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 8% 24%;
+    --input: 30 8% 24%;
+    --ring: 15 78% 54%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Poppins', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #C04C20; color: #F2ECE0; }
+}
+
+/* Editorial helpers */
+.mono-label {
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.68rem;
+  color: hsl(var(--muted-foreground));
+}
+.headline {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+.dotaccent { color: #C04C20; }
+
+/* thin rule */
+.rule { border-top: 1px solid hsl(var(--foreground) / 0.14); }
+
+/* animated entrances */
+@keyframes rise { from { opacity: 0; transform: translateY(10px);} to {opacity:1; transform:none;} }
+.rise { animation: rise .5s cubic-bezier(.22,1,.36,1) both; }
+
+/* custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / .4); border-radius: 999px; }
+::-webkit-scrollbar-track { background: transparent; }
