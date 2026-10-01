@@ -89,3 +89,9 @@ android-sdk/
 credentials.json
 *.key
 .credentials
+
+# Exception: keep BACKEND secrets committed so a re-imported copy on a new
+# Emergent account reuses the SAME JWT_SECRET + ADMIN login (no new ones created).
+# NOTE: this intentionally exposes secrets in the repo — keep the repo PRIVATE.
+# frontend/.env stays ignored (its REACT_APP_BACKEND_URL is environment-specific).
+!backend/.env
