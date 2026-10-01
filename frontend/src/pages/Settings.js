@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Plus, Download, Upload } from "lucide-react";
 import { isSafeLogo } from "@/lib/print";
 import { toast } from "sonner";
+import LoadError from "@/components/LoadError";
 
 const LOGO_TYPES = ["image/svg+xml", "image/png", "image/jpeg", "image/webp"];
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
@@ -24,6 +25,8 @@ const F = ({ label, k, form, set, type = "text" }) => (
 
 export default function Settings() {
   const [form, setForm] = useState(null);
+  const [loadErr, setLoadErr] = useState(false);
+  const [reload, setReload] = useState(0);
   const [packages, setPackages] = useState([]);
   const [pkg, setPkg] = useState({ description: "", sub: "", qty: 1, rate: 0 });
   const nav = useNavigate();
@@ -36,11 +39,12 @@ export default function Settings() {
         p.logo_url = "";
       }
       setForm(p);
-    });
-    api.get("/packages").then((r) => setPackages(r.data));
-  }, []);
+    }).catch(() => setLoadErr(true));
+    api.get("/packages").then((r) => setPackages(r.data)).catch(() => {});
+  }, [reload]);
 
-  if (!form) return <div className="mono-label">Loading…</div>;
+  if (loadErr) return <LoadError onRetry={() => { setLoadErr(false); setReload((n) => n + 1); }} testid="settings-load-error" />;
+  if (!form) return <div className="mono-label" role="status">Loading…</div>;
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const setPrefix = (k) => (e) => setForm((f) => ({ ...f, prefixes: { ...(f.prefixes || {}), [k]: e.target.value } }));
 

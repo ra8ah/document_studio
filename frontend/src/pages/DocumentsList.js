@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus } from "lucide-react";
 import Pager from "@/components/Pager";
+import LoadError from "@/components/LoadError";
 
 const PAGE_SIZE = 25;
 
@@ -18,17 +19,25 @@ export default function DocumentsList() {
   const [sort, setSort] = useState("-created_at");
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(false);
+  const [reload, setReload] = useState(0);
   const nav = useNavigate();
 
   // any filter change starts again from page 1
   useEffect(() => { setPage(1); }, [search, type, status, sort]);
 
   useEffect(() => {
+    // AbortController: a slower, older search can never overwrite the newer result
+    const ctrl = new AbortController();
+    setLoading(true);
     const t = setTimeout(() => api.get("/documents", {
+      signal: ctrl.signal,
       params: { search, type: type === "all" ? "" : type, status: status === "all" ? "" : status, sort, page, page_size: PAGE_SIZE },
-    }).then((r) => { setDocs(r.data.items); setMeta(r.data); }), 200);
-    return () => clearTimeout(t);
-  }, [search, type, status, sort, page]);
+    }).then((r) => { setDocs(r.data.items); setMeta(r.data); setErr(false); setLoading(false); })
+      .catch((e) => { if (e?.code === "ERR_CANCELED" || ctrl.signal.aborted) return; setErr(true); setLoading(false); }), 200);
+    return () => { clearTimeout(t); ctrl.abort(); };
+  }, [search, type, status, sort, page, reload]);
 
   return (
     <div className="rise space-y-8">
@@ -66,8 +75,12 @@ export default function DocumentsList() {
         </Select>
       </div>
 
-      <div className="rule" />
-      {docs.length === 0 ? (
+      <div className="rule relative">{loading && meta && <span className="absolute right-0 -top-5 mono-label" role="status" data-testid="documents-refreshing">Loading…</span>}</div>
+      {err ? (
+        <LoadError onRetry={() => setReload((n) => n + 1)} testid="documents-load-error" />
+      ) : loading && !meta ? (
+        <div className="py-16 text-center mono-label" role="status" data-testid="documents-loading">Loading…</div>
+      ) : docs.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground">No documents match.</div>
       ) : (
         <div className="divide-y divide-foreground/10">

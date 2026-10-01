@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import LoadError from "@/components/LoadError";
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { money, fmtDate, TYPE_MAP, STATUS_META } from "@/lib/format";
@@ -17,14 +18,20 @@ function Stat({ label, code, value, sub, dark }) {
 
 export default function Dashboard() {
   const [d, setD] = useState(null);
+  const [err, setErr] = useState(false);
+  const load = () => { setErr(false); api.get("/dashboard").then((r) => setD(r.data)).catch(() => setErr(true)); };
   const nav = useNavigate();
 
   useEffect(() => {
     api.post("/recurring/run").catch(() => {});
-    api.get("/dashboard").then((r) => setD(r.data));
+    load();
   }, []);
 
-  if (!d) return <div className="mono-label">Loading…</div>;
+  if (err) return <LoadError onRetry={load} testid="dashboard-load-error" />;
+  if (!d) return <div className="mono-label" role="status">Loading…</div>;
+  // never add currencies together: headline = default currency, others listed separately
+  const others = (by) => Object.entries(by || {}).filter(([c, v]) => c !== d.currency && v)
+    .map(([c, v]) => money(v, c)).join(" · ");
   const cur = d.currency;
 
   return (
@@ -42,8 +49,8 @@ export default function Dashboard() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <Stat dark label="Revenue" code="this month" value={money(d.this_month_revenue, cur)} sub="Paid invoices & receipts" />
-        <Stat label="Outstanding" code="total" value={money(d.outstanding, cur)} sub="Across unpaid invoices" />
+        <Stat dark label="Revenue" code="this month" value={money(d.this_month_revenue, cur)} sub={others(d.revenue_by_currency) ? `+ ${others(d.revenue_by_currency)}` : "Paid invoices & receipts"} />
+        <Stat label="Outstanding" code="total" value={money(d.outstanding, cur)} sub={others(d.outstanding_by_currency) ? `+ ${others(d.outstanding_by_currency)}` : "Across unpaid invoices"} />
         <Stat label="Unpaid" code="invoices" value={d.unpaid_count} sub="Awaiting payment" />
         <Stat label="Overdue" code="alerts" value={d.overdue_count} sub={d.overdue_count ? "Needs attention" : "All clear"} />
       </div>

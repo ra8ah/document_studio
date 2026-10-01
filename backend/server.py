@@ -24,7 +24,7 @@ from pymongo.errors import DuplicateKeyError
 from pydantic import BaseModel
 
 import auth
-from models import BusinessProfile, ClientIn, DocumentIn, DocumentUpdate, PackageIn
+from models import BusinessProfile, ClientIn, DocumentIn, DocumentUpdate, PackageIn, ResetIn
 from renderer import compute_totals, TYPE_META
 from docdata import build_default_data, default_line_items
 import docx_export
@@ -404,26 +404,82 @@ async def get_document(did: str, user=Depends(current_user)):
     return s
 
 
+DATA_KEY = re.compile(r"^[A-Za-z0-9_]{1,64}$")
+# rendered from the document itself, never taken from the client payload
+PROTECTED_DATA_KEYS = {"number"}
+
+
 @api.put("/documents/{did}")
 async def update_document(did: str, body: DocumentUpdate, user=Depends(current_user)):
-    update = {k: v for k, v in body.model_dump(exclude_none=True).items()}
-    if "data" in update and "logo_url" in update["data"]:
-        update["data"]["logo_url"] = validate_logo(update["data"].get("logo_url"))
-    if "line_items" in update:
-        update["line_items"] = [dict(i) for i in update["line_items"]]
     _id = oid(did)
-    if "client_id" in update and update["client_id"]:
+    payload = body.model_dump(exclude_none=True)
+    expected = payload.pop("expected_updated_at", None)
+    force = payload.pop("force", False)
+    update = {}
+    # data is MERGED key by key (dotted $set): fields the editor does not render/scrape
+    # (label, logo_url, reference_label, …) are never wiped by a save.
+    data = payload.pop("data", None)
+    if data is not None:
+        if not isinstance(data, dict):
+            raise HTTPException(422, "data must be an object")
+        if "logo_url" in data:
+            data["logo_url"] = validate_logo(data.get("logo_url"))
+        for k, v in data.items():
+            if not DATA_KEY.match(str(k)):
+                raise HTTPException(422, f"Invalid data field name: {k!r}")
+            if k not in PROTECTED_DATA_KEYS:
+                update[f"data.{k}"] = v
+    for k, v in payload.items():
+        update[k] = [dict(i) for i in v] if k == "line_items" else v
+    if update.get("client_id"):
         cl = await db.clients.find_one({"_id": body_oid(update["client_id"], "client_id")})
         if cl:
             update["client_name"] = cl.get("name", "")
     update["updated_at"] = datetime.now(timezone.utc).isoformat()
-    r = await db.documents.update_one({"_id": _id}, {"$set": update})
+    flt = {"_id": _id}
+    if expected and not force:
+        flt["updated_at"] = expected
+    r = await db.documents.update_one(flt, {"$set": update})
     if not r.matched_count:
-        raise HTTPException(404, "Not found")
+        current = await db.documents.find_one({"_id": _id}, {"updated_at": 1})
+        if not current:
+            raise HTTPException(404, "Not found")
+        raise HTTPException(409, {"message": "This document changed elsewhere",
+                                  "server_updated_at": current.get("updated_at")})
     d = await db.documents.find_one({"_id": _id})
     s = ser(d)
     s["totals"] = compute_totals(d)
     return s
+
+
+@api.post("/documents/{did}/reset")
+async def reset_document(did: str, body: ResetIn, user=Depends(current_user)):
+    """Clear & start fresh: keeps id, type, number, client and status; rebuilds content."""
+    src = await db.documents.find_one({"_id": oid(did)})
+    if not src:
+        raise HTTPException(404, "Not found")
+    profile = await get_profile()
+    cl = None
+    if src.get("client_id") and ObjectId.is_valid(src["client_id"]):
+        cl = await db.clients.find_one({"_id": ObjectId(src["client_id"])})
+    data = build_default_data(src["type"], profile, cl or {}, src["number"])
+    items = default_line_items(src["type"])
+    if body.mode == "blank":
+        keep = {"number", "label", "reference_label", "logo_url"}  # structural, not content
+        data = {k: (v if k in keep else ([] if isinstance(v, list) else "")) for k, v in data.items()}
+        data["sections"] = []
+        items = []
+    update = {
+        "data": data, "line_items": items,
+        "discount": {"enabled": False, "mode": "percent", "value": 0, "label": "Discount"},
+        "tax": {"enabled": False, "mode": "percent", "value": 0, "label": "Tax"},
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.documents.update_one({"_id": src["_id"]}, {"$set": update})
+    d = await db.documents.find_one({"_id": src["_id"]})
+    out = ser(d)
+    out["totals"] = compute_totals(d)
+    return out
 
 
 @api.delete("/documents/{did}")
@@ -624,7 +680,7 @@ async def dashboard(user=Depends(current_user)):
     pipeline = [{"$facet": {
         "outstanding": [
             {"$match": unpaid_invoice},
-            {"$group": {"_id": None, "sum": {"$sum": TOTAL_EXPR}, "n": {"$sum": 1}}},
+            {"$group": {"_id": "$currency", "sum": {"$sum": TOTAL_EXPR}, "n": {"$sum": 1}}},
         ],
         "overdue": [
             # ISO YYYY-MM-DD strings compare chronologically; malformed dates are ignored
@@ -641,7 +697,7 @@ async def dashboard(user=Depends(current_user)):
         "revenue": [
             {"$match": {"status": "paid", "type": {"$in": ["invoice", "receipt"]},
                         "paid_date": {"$regex": "^" + re.escape(month_key)}}},
-            {"$group": {"_id": None, "sum": {"$sum": TOTAL_EXPR}}},
+            {"$group": {"_id": "$currency", "sum": {"$sum": TOTAL_EXPR}}},
         ],
         "recent": [
             {"$sort": {"created_at": -1}},
@@ -653,14 +709,20 @@ async def dashboard(user=Depends(current_user)):
     r = (await db.documents.aggregate(pipeline).to_list(1))[0]
     first = lambda k, f: (r[k][0][f] if r[k] else 0)  # noqa: E731
     profile = await get_profile()
+    cur = profile.get("default_currency", "USD")
+    # never add different currencies together: headline = default currency, rest as breakdown
+    by_cur = lambda rows: {(x["_id"] or cur): float(x["sum"]) for x in rows}  # noqa: E731
+    out_by, rev_by = by_cur(r["outstanding"]), by_cur(r["revenue"])
     return {
-        "outstanding": float(first("outstanding", "sum")),
-        "unpaid_count": int(first("outstanding", "n")),
-        "this_month_revenue": float(first("revenue", "sum")),
+        "outstanding": out_by.get(cur, 0.0),
+        "outstanding_by_currency": out_by,
+        "unpaid_count": int(sum(x["n"] for x in r["outstanding"])),
+        "this_month_revenue": rev_by.get(cur, 0.0),
+        "revenue_by_currency": rev_by,
         "overdue": r["overdue"],
         "overdue_count": int(first("overdue_count", "n")),
         "recent": [ser(x) for x in r["recent"]],
-        "currency": profile.get("default_currency", "USD"),
+        "currency": cur,
         "total_documents": int(first("count", "n")),
     }
 

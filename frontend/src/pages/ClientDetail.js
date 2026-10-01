@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import LoadError from "@/components/LoadError";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { money, fmtDate, TYPE_MAP, STATUS_META } from "@/lib/format";
@@ -8,14 +9,18 @@ export default function ClientDetail() {
   const { id } = useParams();
   const [client, setClient] = useState(null);
   const [docs, setDocs] = useState([]);
+  const [err, setErr] = useState(null);
+  const [reload, setReload] = useState(0);
   const nav = useNavigate();
 
   useEffect(() => {
-    api.get(`/clients/${id}`).then((r) => setClient(r.data));
-    api.get(`/clients/${id}/documents`).then((r) => setDocs(r.data));
-  }, [id]);
+    setErr(null);
+    api.get(`/clients/${id}`).then((r) => setClient(r.data)).catch((e) => setErr(e?.response?.status === 404 ? "notfound" : "error"));
+    api.get(`/clients/${id}/documents`).then((r) => setDocs(r.data)).catch(() => {});
+  }, [id, reload]);
 
-  if (!client) return <div className="mono-label">Loading…</div>;
+  if (err) return <LoadError notFound={err === "notfound"} message={err === "notfound" ? "Client not found." : undefined} onRetry={() => setReload((n) => n + 1)} testid="client-load-error" />;
+  if (!client) return <div className="mono-label" role="status">Loading…</div>;
 
   return (
     <div className="rise space-y-8">

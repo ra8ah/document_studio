@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import Pager from "@/components/Pager";
+import LoadError from "@/components/LoadError";
 
 const PAGE_SIZE = 25;
 
@@ -26,12 +27,13 @@ export default function Clients() {
 
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState(null);
+  const [err, setErr] = useState(false);
   const load = (q = search, p = page) => api.get("/clients", { params: { search: q, page: p, page_size: PAGE_SIZE } })
     .then((r) => {
       // deleting the last row of the last page: step back a page
       if (r.data.items.length === 0 && p > 1) { setPage(p - 1); return; }
-      setClients(r.data.items); setMeta(r.data);
-    });
+      setClients(r.data.items); setMeta(r.data); setErr(false);
+    }).catch(() => setErr(true));
   useEffect(() => { setPage(1); }, [search]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(() => load(search, page), 250); return () => clearTimeout(t); }, [search, page]);
@@ -42,8 +44,12 @@ export default function Clients() {
   const save = async () => {
     if (!form.name.trim()) return toast.error("Name is required");
     const payload = { ...form }; delete payload.id; delete payload.created_at;
-    if (editId) await api.put(`/clients/${editId}`, payload);
-    else await api.post("/clients", payload);
+    try {
+      if (editId) await api.put(`/clients/${editId}`, payload);
+      else await api.post("/clients", payload);
+    } catch (e) {
+      return toast.error(`Couldn't save the client${typeof e?.response?.data?.detail === "string" ? `: ${e.response.data.detail}` : ""}`);
+    }
     toast.success("Client saved");
     setOpen(false);
     load(search);
@@ -68,7 +74,9 @@ export default function Clients() {
       </div>
 
       <div className="rule" />
-      {clients.length === 0 ? (
+      {err ? (
+        <LoadError onRetry={() => load()} testid="clients-load-error" />
+      ) : clients.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground">No clients yet.</div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

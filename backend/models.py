@@ -110,3 +110,11 @@ class DocumentUpdate(BaseModel):
     discount: Optional[dict] = None
     tax: Optional[dict] = None
     recurring: Optional[dict] = None
+    # optimistic concurrency: the updated_at the client last loaded/saved; mismatch -> 409
+    expected_updated_at: Optional[str] = None
+    # explicit opt-in to overwrite a newer server copy (user chose "Overwrite" after a 409)
+    force: Optional[bool] = None
+
+
+class ResetIn(BaseModel):
+    mode: Literal["defaults", "blank"] = "defaults"

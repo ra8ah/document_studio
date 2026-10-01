@@ -68,7 +68,7 @@ class TestClients:
     def test_list(self, client, client_id):
         r = client.get(f"{BASE_URL}/api/clients")
         assert r.status_code == 200
-        assert any(c["id"] == client_id for c in r.json())
+        assert any(c["id"] == client_id for c in r.json()["items"])
 
     def test_get(self, client, client_id):
         r = client.get(f"{BASE_URL}/api/clients/{client_id}")
@@ -103,7 +103,7 @@ class TestDocuments:
     def test_list(self, client, doc_id):
         r = client.get(f"{BASE_URL}/api/documents")
         assert r.status_code == 200
-        assert any(d["id"] == doc_id for d in r.json())
+        assert any(d["id"] == doc_id for d in r.json()["items"])
 
     def test_update_with_line_items(self, client, doc_id):
         payload = {
@@ -119,15 +119,9 @@ class TestDocuments:
         assert len(d["line_items"]) == 1
         assert d["line_items"][0]["description"] == "Design"
 
-    def test_pdf_a4(self, client, doc_id):
-        r = client.get(f"{BASE_URL}/api/documents/{doc_id}/pdf", params={"size": "A4"})
-        assert r.status_code == 200, r.text[:200]
-        assert r.content[:4] == b"%PDF"
-
-    def test_pdf_letter(self, client, doc_id):
-        r = client.get(f"{BASE_URL}/api/documents/{doc_id}/pdf", params={"size": "Letter"})
-        assert r.status_code == 200
-        assert r.content[:4] == b"%PDF"
+    def test_server_pdf_removed(self, client, doc_id):
+        # PDF is produced client-side (browser print); the server route is gone
+        assert client.get(f"{BASE_URL}/api/documents/{doc_id}/pdf").status_code == 404
 
     def test_docx(self, client, doc_id):
         r = client.get(f"{BASE_URL}/api/documents/{doc_id}/docx")
@@ -150,9 +144,6 @@ class TestDocuments:
         # public
         r2 = requests.get(f"{BASE_URL}/api/share/{token}")
         assert r2.status_code == 200
-        r3 = requests.get(f"{BASE_URL}/api/share/{token}/pdf")
-        assert r3.status_code == 200
-        assert r3.content[:4] == b"%PDF"
 
     def test_convert_and_mark_paid(self, client, client_id):
         # create quotation, convert to invoice

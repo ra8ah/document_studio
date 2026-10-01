@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import api from "@/lib/api";
 import { DOC_TYPES } from "@/lib/format";
 import {
@@ -13,8 +14,12 @@ export default function CommandPalette({ open, setOpen }) {
 
   const createDoc = async (type) => {
     setOpen(false);
-    const { data } = await api.post("/documents", { type, theme: "light" });
-    nav(`/documents/${data.id}`);
+    try {
+      const { data } = await api.post("/documents", { type, theme: "light" });
+      nav(`/documents/${data.id}`);
+    } catch {
+      toast.error("Couldn't create the document — please try again");
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import { money, TYPE_MAP } from "@/lib/format";
 import { isSafeLogo } from "@/lib/print";
 import "@/styles/document.css";
@@ -8,21 +8,20 @@ const PRICING_TYPES = new Set(["proposal", "maintenance_plan", "statement_of_wor
 const LEGAL_TYPES = new Set(["service_agreement", "nda", "statement_of_work"]);
 const SIGN_TYPES = new Set(["service_agreement", "nda", "statement_of_work", "proposal"]);
 
+// content is set once on mount: React 19 re-writes innerHTML on every render otherwise, wiping what the user typed.
+// The editor remounts the canvas (key) whenever stored content must replace the on-screen text.
 function Editable({ field, tag = "span", className = "", initial = "", editable }) {
   const Tag = tag;
-  return (
-    <Tag
-      contentEditable={editable}
-      suppressContentEditableWarning
-      data-field={field}
-      className={className}
-      dangerouslySetInnerHTML={{ __html: (initial || "").replace(/</g, "&lt;").replace(/\n/g, "<br>") }}
-    />
-  );
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    if (ref.current) ref.current.innerHTML = (initial || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <Tag ref={ref} contentEditable={editable} suppressContentEditableWarning data-field={field} className={className} />;
 }
 
 const DocumentCanvas = forwardRef(function DocumentCanvas(
-  { doc, currency, theme, discount, tax, editable = true, size = "A4" }, ref
+  { doc, currency, theme, discount, tax, editable = true, size = "A4", onChange }, ref
 ) {
   const rootRef = useRef(null);
   const meta = TYPE_MAP[doc.type] || { layout: "content" };
@@ -59,14 +58,26 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
 
   useEffect(() => { recalc(); /* eslint-disable-next-line */ }, [rows, currency, discount, tax]);
 
+  // structural edits (row / section added or removed) count as changes; skip the initial mount
+  const prevStruct = useRef({ rows, sections }); // identity check is StrictMode-safe (effects run twice on mount)
+  useEffect(() => {
+    if (prevStruct.current.rows === rows && prevStruct.current.sections === sections) return;
+    prevStruct.current = { rows, sections };
+    if (onChange) onChange();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, sections]);
+
   useImperativeHandle(ref, () => ({
     addLineItem: (item) => setRows((r) => [...r, { key: `r${Date.now()}-${Math.random()}`, description: item?.description || "New service", sub: item?.sub || "Short description", qty: item?.qty ?? 1, rate: item?.rate ?? 0 }]),
     addSection: () => setSections((s) => [...s, { key: `s${Date.now()}`, label: String(s.length + 1).padStart(2, "0"), heading: "New section", body: "Add content…" }]),
     collect: () => {
       const root = rootRef.current;
+      // empty-overwrite guard: never report a payload before the canvas is mounted/populated
+      if (!root || !root.isConnected || root.querySelectorAll("[data-field]").length === 0) return null;
       // start from the stored data so non-editable fields (label, logo_url, reference_label…) survive a save
       const d = { ...(doc.data || {}) };
       delete d.sections;
+      delete d.logo_url; // not editable here; the server keeps it (merge-patch) and it keeps payloads small
       root.querySelectorAll("[data-field]").forEach((el) => { d[el.dataset.field] = el.innerText.trim(); });
       const line_items = [...root.querySelectorAll("tr[data-row]")].map((tr) => ({
         description: tr.querySelector(".d")?.innerText.trim() || "",
@@ -96,7 +107,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
         </div>
         <Editable field="tagline" tag="div" className="mono tag" editable={editable} initial={data.tagline || ""} />
       </div>
-      <div className="docno">{data.label} / <b><Editable field="number" editable={editable} initial={data.number || ""} /></b></div>
+      <div className="docno">{data.label} / <b data-testid="doc-number">{doc.number || data.number}</b></div>
     </div>
   );
 
@@ -269,7 +280,8 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
 
   return (
     <div className={`doc-wrap ${theme === "dark" ? "doc-dark" : "doc-light"}`} data-print-target>
-      <div ref={rootRef} className={`doc-page ${size === "Letter" ? "letter" : ""}`} data-testid="document-canvas">
+      <div ref={rootRef} className={`doc-page ${size === "Letter" ? "letter" : ""}`} data-testid="document-canvas"
+        onInput={editable && onChange ? () => onChange() : undefined}>
         {/* print-frame: plain block on screen; in Firefox/Safari print its spacer rows repeat on every page as margins */}
         <table className="print-frame" role="presentation">
           <thead><tr><td><div className="pf-top" /></td></tr></thead>
