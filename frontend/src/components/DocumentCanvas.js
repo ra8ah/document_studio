@@ -2,11 +2,22 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, us
 import { money, TYPE_MAP } from "@/lib/format";
 import { isSafeLogo } from "@/lib/print";
 import "@/styles/document.css";
+import PageGuides from "@/components/PageGuides";
 
 const parseNum = (s) => parseFloat(String(s == null ? "" : s).replace(/[^0-9.\-]/g, "")) || 0;
 const PRICING_TYPES = new Set(["proposal", "maintenance_plan", "statement_of_work"]);
 const LEGAL_TYPES = new Set(["service_agreement", "nda", "statement_of_work"]);
 const SIGN_TYPES = new Set(["service_agreement", "nda", "statement_of_work", "proposal"]);
+
+const FIELD_LABELS = {
+  brand: "Brand name", tagline: "Tagline", footer_line: "Footer line", footer_contact: "Footer contact",
+  bill_to_name: "Client name", bill_to_lines: "Client address", from_name: "Sender name", from_lines: "Sender address",
+  issue_date: "Issue date", due_date: "Due date", project_reference: "Project reference", billing_note: "Billing note",
+  payment_details: "Payment details", sign_left: "Provider signature line", sign_right: "Client signature line",
+};
+const labelFor = (f) => FIELD_LABELS[f] || f.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+const MULTILINE_TAGS = new Set(["div", "p"]);
+const tb = (editable, label, multi = false) => (editable ? { role: "textbox", "aria-label": label, "aria-multiline": multi ? "true" : "false" } : {});
 
 // content is set once on mount: React 19 re-writes innerHTML on every render otherwise, wiping what the user typed.
 // The editor remounts the canvas (key) whenever stored content must replace the on-screen text.
@@ -17,11 +28,12 @@ function Editable({ field, tag = "span", className = "", initial = "", editable 
     if (ref.current) ref.current.innerHTML = (initial || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return <Tag ref={ref} contentEditable={editable} suppressContentEditableWarning data-field={field} className={className} />;
+  const a11y = editable ? { role: "textbox", "aria-label": labelFor(field), "aria-multiline": MULTILINE_TAGS.has(tag) ? "true" : "false", tabIndex: 0 } : {};
+  return <Tag ref={ref} contentEditable={editable} suppressContentEditableWarning data-field={field} className={className} {...a11y} />;
 }
 
 const DocumentCanvas = forwardRef(function DocumentCanvas(
-  { doc, currency, theme, discount, tax, editable = true, size = "A4", onChange }, ref
+  { doc, currency, theme, discount, tax, editable = true, size = "A4", onChange, guides = false }, ref
 ) {
   const rootRef = useRef(null);
   const meta = TYPE_MAP[doc.type] || { layout: "content" };
@@ -124,15 +136,15 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
         <colgroup><col className="c1" /><col className="c2" /><col className="c3" /><col className="c4" /></colgroup>
         <thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
         <tbody>
-          {rows.map((it) => (
+          {rows.map((it, i) => (
             <tr key={it.key} data-row>
               <td>
-                {editable && <button type="button" className="rm" title="Remove line item" data-testid="remove-line-item" onClick={() => { setRows((r) => r.filter((x) => x.key !== it.key)); }}>×</button>}
-                <span className="d" contentEditable={editable} suppressContentEditableWarning>{it.description}</span>
-                <span className="s" contentEditable={editable} suppressContentEditableWarning>{it.sub}</span>
+                {editable && <button type="button" className="rm" title="Remove line item" aria-label={`Remove line item ${i + 1}`} data-testid="remove-line-item" onClick={() => { setRows((r) => r.filter((x) => x.key !== it.key)); }}>×</button>}
+                <span className="d" contentEditable={editable} suppressContentEditableWarning {...tb(editable, `Line ${i + 1} description`)}>{it.description}</span>
+                <span className="s" contentEditable={editable} suppressContentEditableWarning {...tb(editable, `Line ${i + 1} detail`)}>{it.sub}</span>
               </td>
-              <td className="qty" contentEditable={editable} suppressContentEditableWarning onInput={recalc}>{it.qty}</td>
-              <td className="rate" contentEditable={editable} suppressContentEditableWarning onBlur={rateBlur} onInput={recalc}>{money(it.rate, currency)}</td>
+              <td className="qty" contentEditable={editable} suppressContentEditableWarning onInput={recalc} {...tb(editable, `Line ${i + 1} quantity`)}>{it.qty}</td>
+              <td className="rate" contentEditable={editable} suppressContentEditableWarning onBlur={rateBlur} onInput={recalc} {...tb(editable, `Line ${i + 1} rate`)}>{money(it.rate, currency)}</td>
               <td className="amount">{money((Number(it.qty) || 0) * (Number(it.rate) || 0), currency)}</td>
             </tr>
           ))}
@@ -248,11 +260,11 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
         {sections.map((s) => (
           <div className="section" data-section key={s.key}>
             <div className="mono">
-              <span className="sec-label" contentEditable={editable} suppressContentEditableWarning>{s.label}</span>
-              {editable && <button type="button" className="secrm" onClick={() => setSections((x) => x.filter((y) => y.key !== s.key))}>remove</button>}
+              <span className="sec-label" contentEditable={editable} suppressContentEditableWarning {...tb(editable, "Section number")}>{s.label}</span>
+              {editable && <button type="button" className="secrm" aria-label={`Remove section ${s.heading}`} onClick={() => setSections((x) => x.filter((y) => y.key !== s.key))}>remove</button>}
             </div>
-            <h3 className="sec-h" contentEditable={editable} suppressContentEditableWarning>{s.heading}</h3>
-            <div className="body sec-b" contentEditable={editable} suppressContentEditableWarning>{s.body}</div>
+            <h3 className="sec-h" contentEditable={editable} suppressContentEditableWarning {...tb(editable, "Section heading")}>{s.heading}</h3>
+            <div className="body sec-b" contentEditable={editable} suppressContentEditableWarning {...tb(editable, "Section text", true)}>{s.body}</div>
           </div>
         ))}
         {showPricing && (
@@ -282,6 +294,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
     <div className={`doc-wrap ${theme === "dark" ? "doc-dark" : "doc-light"}`} data-print-target>
       <div ref={rootRef} className={`doc-page ${size === "Letter" ? "letter" : ""}`} data-testid="document-canvas"
         onInput={editable && onChange ? () => onChange() : undefined}>
+        {guides && <PageGuides rootRef={rootRef} size={size} />}
         {/* print-frame: plain block on screen; in Firefox/Safari print its spacer rows repeat on every page as margins */}
         <table className="print-frame" role="presentation">
           <thead><tr><td><div className="pf-top" /></td></tr></thead>

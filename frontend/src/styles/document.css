@@ -10,7 +10,7 @@
 }
 .doc-page.letter { width: 215.9mm; min-height: 279.4mm; }
 
-.doc-light { --paper:#F2ECE0; --text:#201C18; --dark:#2C2824; --darktext:#F2ECE0; --accent:#C04C20; --muted:#78746C; --rule:#201C18; --rule2:rgba(120,116,108,.6); }
+.doc-light { --paper:#F2ECE0; --text:#201C18; --dark:#2C2824; --darktext:#F2ECE0; --accent:#A9441C; --muted:#68645C; --rule:#201C18; --rule2:rgba(120,116,108,.6); }
 .doc-dark  { --paper:#1C1815; --text:#F2ECE0; --dark:#2C2824; --darktext:#F2ECE0; --accent:#E0673B; --muted:#A8A29A; --rule:rgba(242,236,224,.9); --rule2:rgba(168,162,154,.4); }
 .doc-page { background: var(--paper); color: var(--text); }
 
@@ -100,3 +100,12 @@
 
 /* responsive scaling of the canvas */
 .doc-scale { transform-origin: top center; }
+
+/* page-break guides (screen only; [data-print-hide] is display:none in print) */
+.doc-page .page-guide { position:absolute; left:0; right:0; height:0; border-top:1.5px dashed rgba(192,76,32,.55); pointer-events:none; z-index:2; }
+.doc-page .page-guide span { position:absolute; right:4mm; top:-9px; font-family:var(--mono); font-size:6.5pt; letter-spacing:.12em; text-transform:uppercase; background:var(--paper); color:var(--accent); padding:0 6px; }
+@media print { .doc-page .page-guide { display:none !important; } }
+
+/* keyboard: editable regions + row controls show a clear focus ring */
+.doc-page [contenteditable="true"]:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
+.doc-page .rm:focus-visible, .doc-page .secrm:focus-visible, .doc-page .doc-add-row:focus-visible { outline:2px solid var(--accent); outline-offset:2px; opacity:1; }

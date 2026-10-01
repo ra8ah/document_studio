@@ -192,7 +192,7 @@ def _reference_dashboard(db):
     UNPAID = {"draft", "sent", "viewed", "overdue"}
     today = datetime.now(timezone.utc).date()
     out = {"outstanding": 0.0, "unpaid_count": 0, "this_month_revenue": 0.0, "overdue_count": 0}
-    docs = list(db.documents.find({}))
+    docs = list(db.documents.find({"deleted_at": None}))  # trashed docs never count
     for d in docs:
         t = compute_totals(d)["total"]
         if d["type"] == "invoice" and d.get("status") in UNPAID:

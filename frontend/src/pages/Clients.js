@@ -12,6 +12,8 @@ import { Search, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import Pager from "@/components/Pager";
 import LoadError from "@/components/LoadError";
+import { Switch } from "@/components/ui/switch";
+import { CardsSkeleton } from "@/components/Skeletons";
 
 const PAGE_SIZE = 25;
 
@@ -28,15 +30,16 @@ export default function Clients() {
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState(null);
   const [err, setErr] = useState(false);
-  const load = (q = search, p = page) => api.get("/clients", { params: { search: q, page: p, page_size: PAGE_SIZE } })
+  const [archived, setArchived] = useState(false);
+  const load = (q = search, p = page) => api.get("/clients", { params: { search: q, page: p, page_size: PAGE_SIZE, archived: archived ? "only" : "exclude" } })
     .then((r) => {
       // deleting the last row of the last page: step back a page
       if (r.data.items.length === 0 && p > 1) { setPage(p - 1); return; }
       setClients(r.data.items); setMeta(r.data); setErr(false);
     }).catch(() => setErr(true));
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { setPage(1); }, [search, archived]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { const t = setTimeout(() => load(search, page), 250); return () => clearTimeout(t); }, [search, page]);
+  useEffect(() => { const t = setTimeout(() => load(search, page), 250); return () => clearTimeout(t); }, [search, page, archived]);
 
   const openNew = () => { setForm(EMPTY); setEditId(null); setOpen(true); };
   const openEdit = (c) => { setForm({ ...EMPTY, ...c }); setEditId(c.id); setOpen(true); };
@@ -67,17 +70,24 @@ export default function Clients() {
         <Button data-testid="new-client-button" onClick={openNew} className="rounded-full gap-2"><Plus size={16} /> New client</Button>
       </div>
 
-      <div className="relative max-w-md">
-        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input data-testid="client-search-input" value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search clients…" className="pl-11 rounded-full" />
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative max-w-md flex-1 min-w-[220px]">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input data-testid="client-search-input" aria-label="Search clients" value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search clients…" className="pl-11 rounded-full" />
+        </div>
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <Switch checked={archived} onCheckedChange={setArchived} data-testid="show-archived-toggle" /> Show archived
+        </label>
       </div>
 
       <div className="rule" />
       {err ? (
         <LoadError onRetry={() => load()} testid="clients-load-error" />
+      ) : !meta ? (
+        <CardsSkeleton />
       ) : clients.length === 0 ? (
-        <div className="py-16 text-center text-muted-foreground">No clients yet.</div>
+        <div className="py-16 text-center text-muted-foreground">{archived ? "No archived clients." : "No clients yet."}</div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {clients.map((c) => (
@@ -85,12 +95,12 @@ export default function Clients() {
               className="rounded-2xl border border-foreground/10 p-5 hover:border-foreground/30 transition-colors group">
               <div className="flex items-start justify-between">
                 <button onClick={() => nav(`/clients/${c.id}`)} className="text-left">
-                  <div className="font-medium text-lg">{c.name}</div>
+                  <div className="font-medium text-lg">{c.name}{c.archived && <span className="ml-2 mono-label px-2 py-0.5 rounded-full bg-foreground/10">Archived</span>}</div>
                   <div className="text-sm text-muted-foreground">{c.company || c.email}</div>
                 </button>
-                <button onClick={() => openEdit(c)} data-testid={`edit-client-${c.id}`}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-foreground/5">
-                  <Pencil size={15} />
+                <button onClick={() => openEdit(c)} data-testid={`edit-client-${c.id}`} aria-label={`Edit ${c.name}`}
+                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1.5 rounded-full hover:bg-foreground/5">
+                  <Pencil size={15} aria-hidden="true" />
                 </button>
               </div>
               <div className="mono-label mt-4">{c.currency} · {c.phone || "no phone"}</div>

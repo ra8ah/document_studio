@@ -1,0 +1,50 @@
+[
+  {
+    "page": "login",
+    "theme": "light",
+    "passes": 22,
+    "violations": []
+  },
+  {
+    "page": "dashboard",
+    "theme": "light",
+    "passes": 17,
+    "violations": []
+  },
+  {
+    "page": "documents",
+    "theme": "light",
+    "passes": 22,
+    "violations": []
+  },
+  {
+    "page": "editor",
+    "theme": "light",
+    "passes": 23,
+    "violations": []
+  },
+  {
+    "page": "login",
+    "theme": "dark",
+    "passes": 22,
+    "violations": []
+  },
+  {
+    "page": "dashboard",
+    "theme": "dark",
+    "passes": 17,
+    "violations": []
+  },
+  {
+    "page": "documents",
+    "theme": "dark",
+    "passes": 22,
+    "violations": []
+  },
+  {
+    "page": "editor",
+    "theme": "dark",
+    "passes": 23,
+    "violations": []
+  }
+]

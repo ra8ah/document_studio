@@ -1,0 +1,8 @@
+crons:
+  - name: doc-maintenance
+    description: "Hourly: flags past-due sent/viewed invoices as overdue and purges Trash items older than 30 days"
+    cron: "0 * * * *"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/maintenance"
+    method: POST
+    enabled: true

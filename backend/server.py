@@ -46,6 +46,42 @@ client = AsyncIOMotorClient(
 db = client[os.environ["DB_NAME"]]
 
 
+class LiveDocuments:
+    """db.documents without soft-deleted rows. Every document query goes through this, so trashed
+    documents never leak into lists, lookups, exports, totals, shares or PDFs."""
+    LIVE = {"deleted_at": None}  # matches missing or null
+
+    def __init__(self, coll):
+        self.raw = coll
+
+    def _q(self, q=None):
+        return {"$and": [q, self.LIVE]} if q else dict(self.LIVE)
+
+    def find(self, q=None, *a, **k):
+        return self.raw.find(self._q(q), *a, **k)
+
+    async def find_one(self, q=None, *a, **k):
+        return await self.raw.find_one(self._q(q), *a, **k)
+
+    async def count_documents(self, q=None, **k):
+        return await self.raw.count_documents(self._q(q), **k)
+
+    async def update_one(self, q, u, **k):
+        return await self.raw.update_one(self._q(q), u, **k)
+
+    async def update_many(self, q, u, **k):
+        return await self.raw.update_many(self._q(q), u, **k)
+
+    def aggregate(self, pipeline, **k):
+        return self.raw.aggregate([{"$match": self.LIVE}] + list(pipeline), **k)
+
+    async def insert_one(self, d, **k):
+        return await self.raw.insert_one(d, **k)
+
+
+docs = LiveDocuments(db.documents)
+
+
 def _cors_origins() -> list:
     """CORS must be explicit: credentials are enabled, so "*" (or nothing) is refused at startup."""
     raw = os.environ.get("CORS_ORIGINS", "")
@@ -174,10 +210,14 @@ async def get_profile() -> dict:
 
 async def next_number(dtype: str, profile: dict) -> str:
     prefix = (profile.get("prefixes") or {}).get(dtype) or DEFAULT_PREFIXES.get(dtype, "DOC")
-    r = await db.counters.find_one_and_update(
-        {"_id": dtype}, {"$inc": {"seq": 1}}, upsert=True, return_document=True)
-    seq = r.get("seq", 1)
-    return f"{prefix}-{seq:04d}"
+    # skip numbers already taken (incl. trashed docs: they keep their number and may be restored)
+    for _ in range(1000):
+        r = await db.counters.find_one_and_update(
+            {"_id": dtype}, {"$inc": {"seq": 1}}, upsert=True, return_document=True)
+        number = f"{prefix}-{r.get('seq', 1):04d}"
+        if not await db.documents.find_one({"number": number}, {"_id": 1}):
+            return number
+    raise HTTPException(500, "Could not allocate a document number")
 
 
 # ---------------- health ----------------
@@ -286,12 +326,18 @@ async def update_profile(body: dict, user=Depends(current_user)):
 
 # ---------------- clients ----------------
 @api.get("/clients")
-async def list_clients(user=Depends(current_user), search: str = "", page: int = 1, page_size: int = 25):
+async def list_clients(user=Depends(current_user), search: str = "", page: int = 1, page_size: int = 25,
+                       archived: str = "exclude"):
+    """archived: exclude (default, used by pickers) | only | all"""
     skip, limit = page_params(page, page_size)
     q = {}
+    if archived == "exclude":
+        q["archived"] = {"$ne": True}
+    elif archived == "only":
+        q["archived"] = True
     if search.strip():
         rx = search_regex(search)
-        q = {"$or": [{"name": rx}, {"company": rx}, {"email": rx}]}
+        q["$or"] = [{"name": rx}, {"company": rx}, {"email": rx}]
     total = await db.clients.count_documents(q)
     rows = await db.clients.find(q).sort([("name", 1), ("_id", 1)]).skip(skip).limit(limit).to_list(limit)
     return page_envelope([ser(r) for r in rows], total, page, page_size)
@@ -314,7 +360,7 @@ async def get_client(cid: str, user=Depends(current_user)):
 
 
 @api.put("/clients/{cid}")
-async def update_client(cid: str, body: ClientIn, user=Depends(current_user)):
+async def update_client(cid: str, body: ClientIn, user=Depends(current_user)):  # archived flag untouched
     _id = oid(cid, "Client not found")
     r = await db.clients.update_one({"_id": _id}, {"$set": body.model_dump()})
     if not r.matched_count:
@@ -324,17 +370,33 @@ async def update_client(cid: str, body: ClientIn, user=Depends(current_user)):
 
 @api.delete("/clients/{cid}")
 async def delete_client(cid: str, user=Depends(current_user)):
-    r = await db.clients.delete_one({"_id": oid(cid, "Client not found")})
-    if not r.deleted_count:
+    _id = oid(cid, "Client not found")
+    if not await db.clients.find_one({"_id": _id}, {"_id": 1}):
         raise HTTPException(404, "Client not found")
+    live = await docs.count_documents({"client_id": cid})
+    trashed = await db.documents.count_documents({"client_id": cid, "deleted_at": {"$ne": None}})
+    if live or trashed:
+        raise HTTPException(409, {"message": f"This client has {live + trashed} document(s). Archive the client instead.",
+                                  "document_count": live, "trashed_count": trashed})
+    await db.clients.delete_one({"_id": _id})
     return {"ok": True}
+
+
+@api.post("/clients/{cid}/archive")
+async def archive_client(cid: str, body: dict = None, user=Depends(current_user)):
+    _id = oid(cid, "Client not found")
+    flag = True if not body or body.get("archived", True) else False
+    r = await db.clients.update_one({"_id": _id}, {"$set": {"archived": flag}})
+    if not r.matched_count:
+        raise HTTPException(404, "Client not found")
+    return ser(await db.clients.find_one({"_id": _id}))
 
 
 @api.get("/clients/{cid}/documents")
 async def client_documents(cid: str, user=Depends(current_user)):
     if not await db.clients.find_one({"_id": oid(cid, "Client not found")}, {"_id": 1}):
         raise HTTPException(404, "Client not found")
-    rows = await db.documents.find({"client_id": cid}).sort("created_at", -1).to_list(1000)
+    rows = await docs.find({"client_id": cid}).sort("created_at", -1).to_list(1000)
     return [ser(r) for r in rows]
 
 
@@ -369,13 +431,14 @@ async def create_document(body: DocumentIn, user=Depends(current_user)):
     doc = await _build_document(body.type, body.client_id, body.theme, body.currency, profile)
     if body.title:
         doc["data"]["project_reference"] = body.title
-    r = await db.documents.insert_one(doc)
-    return ser(await db.documents.find_one({"_id": r.inserted_id}))
+    r = await docs.insert_one(doc)
+    return ser(await docs.find_one({"_id": r.inserted_id}))
 
 
 @api.get("/documents")
 async def list_documents(user=Depends(current_user), search: str = "", type: str = "",
                          status: str = "", sort: str = "-created_at", page: int = 1, page_size: int = 25):
+    await refresh_overdue()
     skip, limit = page_params(page, page_size)
     q = {}
     if type:
@@ -403,14 +466,15 @@ async def list_documents(user=Depends(current_user), search: str = "", type: str
             "count": [{"$count": "n"}],
         }},
     ]
-    res = (await db.documents.aggregate(pipeline).to_list(1))[0]
+    res = (await docs.aggregate(pipeline).to_list(1))[0]
     total = res["count"][0]["n"] if res["count"] else 0
     return page_envelope([ser(r) for r in res["items"]], total, page, page_size)
 
 
 @api.get("/documents/{did}")
 async def get_document(did: str, user=Depends(current_user)):
-    d = await db.documents.find_one({"_id": oid(did)})
+    await refresh_overdue()
+    d = await docs.find_one({"_id": oid(did)})
     if not d:
         raise HTTPException(404, "Not found")
     s = ser(d)
@@ -453,14 +517,16 @@ async def update_document(did: str, body: DocumentUpdate, user=Depends(current_u
     flt = {"_id": _id}
     if expected and not force:
         flt["updated_at"] = expected
-    r = await db.documents.update_one(flt, {"$set": update})
+    r = await docs.update_one(flt, {"$set": update})
+    if r.matched_count and "data.due_date" in update:
+        await refresh_overdue()  # moved due date: overdue <-> sent right away
     if not r.matched_count:
-        current = await db.documents.find_one({"_id": _id}, {"updated_at": 1})
+        current = await docs.find_one({"_id": _id}, {"updated_at": 1})
         if not current:
             raise HTTPException(404, "Not found")
         raise HTTPException(409, {"message": "This document changed elsewhere",
                                   "server_updated_at": current.get("updated_at")})
-    d = await db.documents.find_one({"_id": _id})
+    d = await docs.find_one({"_id": _id})
     s = ser(d)
     s["totals"] = compute_totals(d)
     return s
@@ -469,7 +535,7 @@ async def update_document(did: str, body: DocumentUpdate, user=Depends(current_u
 @api.post("/documents/{did}/reset")
 async def reset_document(did: str, body: ResetIn, user=Depends(current_user)):
     """Clear & start fresh: keeps id, type, number, client and status; rebuilds content."""
-    src = await db.documents.find_one({"_id": oid(did)})
+    src = await docs.find_one({"_id": oid(did)})
     if not src:
         raise HTTPException(404, "Not found")
     profile = await get_profile()
@@ -489,8 +555,8 @@ async def reset_document(did: str, body: ResetIn, user=Depends(current_user)):
         "tax": {"enabled": False, "mode": "percent", "value": 0, "label": "Tax"},
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    await db.documents.update_one({"_id": src["_id"]}, {"$set": update})
-    d = await db.documents.find_one({"_id": src["_id"]})
+    await docs.update_one({"_id": src["_id"]}, {"$set": update})
+    d = await docs.find_one({"_id": src["_id"]})
     out = ser(d)
     out["totals"] = compute_totals(d)
     return out
@@ -498,9 +564,185 @@ async def reset_document(did: str, body: ResetIn, user=Depends(current_user)):
 
 @api.delete("/documents/{did}")
 async def delete_document(did: str, user=Depends(current_user)):
-    r = await db.documents.delete_one({"_id": oid(did)})
-    if not r.deleted_count:
+    """Soft delete: moves to Trash (restorable for TRASH_DAYS)."""
+    _id = oid(did)
+    r = await docs.update_one({"_id": _id}, {"$set": {"deleted_at": _now()}})
+    if not r.matched_count:
         raise HTTPException(404, "Not found")
+    await log_activity(did, "trashed")
+    return {"ok": True, "id": did}
+
+
+# ---------------- trash ----------------
+TRASH_DAYS = 30
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+async def purge_trash() -> int:
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=TRASH_DAYS)).isoformat()
+    old = await db.documents.find({"deleted_at": {"$ne": None, "$lt": cutoff}}, {"_id": 1}).to_list(10000)
+    if not old:
+        return 0
+    ids = [d["_id"] for d in old]
+    r = await db.documents.delete_many({"_id": {"$in": ids}})
+    await db.activity.delete_many({"doc_id": {"$in": [str(i) for i in ids]}})
+    logger.info(f"trash: purged {r.deleted_count} document(s) older than {TRASH_DAYS} days")
+    return r.deleted_count
+
+
+@api.get("/trash")
+async def list_trash(user=Depends(current_user)):
+    await purge_trash()
+    rows = await db.documents.find({"deleted_at": {"$ne": None}}).sort("deleted_at", -1).to_list(1000)
+    out = []
+    for r in rows:
+        s = ser(r)
+        s["total"] = compute_totals(r)["total"]
+        purge_at = datetime.fromisoformat(r["deleted_at"]) + timedelta(days=TRASH_DAYS)
+        s["purge_at"] = purge_at.isoformat()
+        s["days_left"] = max(0, (purge_at - datetime.now(timezone.utc)).days)
+        out.append(s)
+    return out
+
+
+@api.post("/documents/{did}/restore")
+async def restore_document(did: str, user=Depends(current_user)):
+    _id = oid(did)
+    r = await db.documents.update_one({"_id": _id, "deleted_at": {"$ne": None}}, {"$unset": {"deleted_at": ""}})
+    if not r.matched_count:
+        raise HTTPException(404, "Not in trash")
+    await log_activity(did, "restored")
+    return ser(await db.documents.find_one({"_id": _id}))
+
+
+@api.delete("/documents/{did}/permanent")
+async def delete_document_permanently(did: str, user=Depends(current_user)):
+    r = await db.documents.delete_one({"_id": oid(did), "deleted_at": {"$ne": None}})
+    if not r.deleted_count:
+        raise HTTPException(404, "Not in trash (move it to trash first)")
+    await db.activity.delete_many({"doc_id": did})
+    return {"ok": True}
+
+
+# ---------------- activity + overdue ----------------
+async def log_activity(doc_id: str, action: str, detail: dict = None, by: str = "user"):
+    await db.activity.insert_one({"doc_id": doc_id, "action": action, "detail": detail or {}, "by": by, "at": _now()})
+
+
+@api.get("/documents/{did}/activity")
+async def document_activity(did: str, user=Depends(current_user)):
+    rows = await db.activity.find({"doc_id": did}, {"_id": 0}).sort("at", -1).to_list(200)
+    return rows
+
+
+ISO_DATE = r"^\d{4}-\d{2}-\d{2}$"
+OVERDUE_FROM = ("sent", "viewed")
+
+
+async def refresh_overdue() -> dict:
+    """Idempotent: sent/viewed invoices past due -> overdue; overdue with a future due date -> sent.
+    Never touches drafts/paid/cancelled. Doesn't bump updated_at (not an edit: no false 409 in open editors)."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    changed = {"overdue": 0, "sent": 0}
+    rules = [
+        ({"status": {"$in": list(OVERDUE_FROM)}, "data.due_date": {"$regex": ISO_DATE, "$lt": today}}, "overdue"),
+        ({"status": "overdue", "data.due_date": {"$regex": ISO_DATE, "$gte": today}}, "sent"),
+    ]
+    for q, new in rules:
+        rows = await docs.find({"type": "invoice", **q}, {"_id": 1, "status": 1, "data.due_date": 1}).to_list(1000)
+        for d in rows:
+            r = await docs.update_one({"_id": d["_id"], "status": d["status"]}, {"$set": {"status": new}})
+            if r.modified_count:
+                changed[new] += 1
+                await log_activity(str(d["_id"]), "status_changed",
+                                   {"from": d["status"], "to": new, "due_date": d["data"]["due_date"], "reason": "due date"},
+                                   by="system")
+    return changed
+
+
+# ---------------- bulk ----------------
+class BulkIn(BaseModel):
+    ids: list
+    action: str
+    status: str = ""
+
+
+@api.post("/documents/bulk")
+async def bulk_documents(body: BulkIn, user=Depends(current_user)):
+    if not body.ids or len(body.ids) > 500:
+        raise HTTPException(422, "ids must contain 1-500 document ids")
+    ids = [body_oid(i, "ids") for i in body.ids]
+    if body.action == "status":
+        if body.status not in STATUSES:
+            raise HTTPException(422, f"status must be one of {sorted(STATUSES)}")
+        r = await docs.update_many({"_id": {"$in": ids}}, {"$set": {"status": body.status, "updated_at": _now()}})
+        for i in body.ids:
+            await log_activity(i, "status_changed", {"to": body.status, "reason": "bulk"})
+        return {"updated": r.modified_count, "matched": r.matched_count}
+    if body.action == "trash":
+        r = await docs.update_many({"_id": {"$in": ids}}, {"$set": {"deleted_at": _now()}})
+        for i in body.ids:
+            await log_activity(i, "trashed", {"reason": "bulk"})
+        return {"updated": r.modified_count, "matched": r.matched_count}
+    raise HTTPException(422, "action must be 'status' or 'trash'")
+
+
+@api.post("/trash/restore")
+async def bulk_restore(body: BulkIn, user=Depends(current_user)):
+    ids = [body_oid(i, "ids") for i in body.ids]
+    r = await db.documents.update_many({"_id": {"$in": ids}, "deleted_at": {"$ne": None}}, {"$unset": {"deleted_at": ""}})
+    return {"updated": r.modified_count}
+
+
+# ---------------- search (command palette) ----------------
+@api.get("/search")
+async def search(q: str = "", user=Depends(current_user)):
+    if not q.strip():
+        return {"documents": [], "clients": []}
+    rx = search_regex(q)
+    drows = await docs.find({"$or": [{"number": rx}, {"client_name": rx}, {"data.project_reference": rx},
+                                     {"data.bill_to_name": rx}]},
+                            {"number": 1, "type": 1, "status": 1, "client_name": 1, "data.project_reference": 1,
+                             "updated_at": 1}).sort("updated_at", -1).limit(8).to_list(8)
+    crows = await db.clients.find({"archived": {"$ne": True}, "$or": [{"name": rx}, {"company": rx}, {"email": rx}]},
+                                  {"name": 1, "company": 1, "email": 1}).sort("name", 1).limit(8).to_list(8)
+    return {"documents": [ser(r) for r in drows], "clients": [ser(r) for r in crows]}
+
+
+# ---------------- cron (platform scheduler) ----------------
+_cron_runs = set()
+
+
+async def run_maintenance():
+    try:
+        await refresh_overdue()
+        await purge_trash()
+    except Exception:
+        logger.exception("maintenance job failed")
+
+
+@api.post("/cron/maintenance")
+async def cron_maintenance(request: Request):
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    import asyncio
+    import hmac
+    secret = os.environ.get("WEBHOOK_CRON_SECRET", "")
+    hdr = request.headers.get("Authorization", "")
+    if not secret or not hdr.startswith("Bearer ") or not hmac.compare_digest(hdr[7:], secret):
+        raise HTTPException(401, "Unauthorized")
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "Invalid body")
+    run_id = request.headers.get("X-Webhook-Id") or (body or {}).get("run_id") or ""
+    if run_id and run_id in _cron_runs:
+        return {"ok": True, "duplicate": True}
+    if run_id:
+        _cron_runs.add(run_id)
+    asyncio.get_running_loop().create_task(run_maintenance())
     return {"ok": True}
 
 
@@ -510,11 +752,12 @@ async def set_status(did: str, body: dict, user=Depends(current_user)):
     if status not in STATUSES:
         raise HTTPException(422, f"status must be one of {sorted(STATUSES)}")
     _id = oid(did)
-    r = await db.documents.update_one({"_id": _id},
+    r = await docs.update_one({"_id": _id},
                                       {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}})
     if not r.matched_count:
         raise HTTPException(404, "Not found")
-    return ser(await db.documents.find_one({"_id": _id}))
+    await log_activity(did, "status_changed", {"to": status})
+    return ser(await docs.find_one({"_id": _id}))
 
 
 async def _clone(src: dict, target_type: str, profile: dict, status="draft"):
@@ -533,13 +776,13 @@ async def _clone(src: dict, target_type: str, profile: dict, status="draft"):
         "paid_date": None,
         "created_at": now, "updated_at": now,
     }
-    r = await db.documents.insert_one(new)
-    return await db.documents.find_one({"_id": r.inserted_id})
+    r = await docs.insert_one(new)
+    return await docs.find_one({"_id": r.inserted_id})
 
 
 @api.post("/documents/{did}/duplicate")
 async def duplicate_document(did: str, user=Depends(current_user)):
-    src = await db.documents.find_one({"_id": oid(did)})
+    src = await docs.find_one({"_id": oid(did)})
     if not src:
         raise HTTPException(404, "Not found")
     profile = await get_profile()
@@ -551,7 +794,7 @@ CONVERT_MAP = {"quotation": "invoice", "proposal": "statement_of_work", "invoice
 
 @api.post("/documents/{did}/convert")
 async def convert_document(did: str, body: dict, user=Depends(current_user)):
-    src = await db.documents.find_one({"_id": oid(did)})
+    src = await docs.find_one({"_id": oid(did)})
     if not src:
         raise HTTPException(404, "Not found")
     target = body.get("target_type") or CONVERT_MAP.get(src["type"])
@@ -563,29 +806,29 @@ async def convert_document(did: str, body: dict, user=Depends(current_user)):
     status = "paid" if target == "receipt" else "draft"
     new = await _clone(src, target, profile, status=status)
     if target == "receipt":
-        await db.documents.update_one({"_id": new["_id"]},
+        await docs.update_one({"_id": new["_id"]},
                                       {"$set": {"paid_date": datetime.now(timezone.utc).date().isoformat(),
                                                 "data.paid_date": datetime.now(timezone.utc).date().isoformat()}})
-        new = await db.documents.find_one({"_id": new["_id"]})
+        new = await docs.find_one({"_id": new["_id"]})
     return ser(new)
 
 
 @api.post("/documents/{did}/mark-paid")
 async def mark_paid(did: str, user=Depends(current_user)):
-    src = await db.documents.find_one({"_id": oid(did)})
+    src = await docs.find_one({"_id": oid(did)})
     if not src:
         raise HTTPException(404, "Not found")
     today = datetime.now(timezone.utc).date().isoformat()
-    await db.documents.update_one({"_id": src["_id"]},
+    await docs.update_one({"_id": src["_id"]},
                                   {"$set": {"status": "paid", "paid_date": today,
                                             "updated_at": datetime.now(timezone.utc).isoformat()}})
     receipt = None
     if src["type"] == "invoice":
         profile = await get_profile()
         r = await _clone(src, "receipt", profile, status="paid")
-        await db.documents.update_one({"_id": r["_id"]},
+        await docs.update_one({"_id": r["_id"]},
                                       {"$set": {"paid_date": today, "data.paid_date": today}})
-        receipt = ser(await db.documents.find_one({"_id": r["_id"]}))
+        receipt = ser(await docs.find_one({"_id": r["_id"]}))
     return {"ok": True, "receipt": receipt}
 
 
@@ -632,7 +875,7 @@ async def _pdf_response(d: dict, size: str):
 
 @api.get("/documents/{did}/pdf")
 async def document_pdf(did: str, size: str = "A4", user=Depends(current_user)):
-    d = await db.documents.find_one({"_id": oid(did)})
+    d = await docs.find_one({"_id": oid(did)})
     if not d:
         raise HTTPException(404, "Not found")
     return await _pdf_response(d, size)
@@ -642,7 +885,7 @@ async def document_pdf(did: str, size: str = "A4", user=Depends(current_user)):
 async def share_pdf(token: str, size: str = "A4"):
     if not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", token):
         raise HTTPException(404, "Not found")
-    d = await db.documents.find_one({"share_token": token})
+    d = await docs.find_one({"share_token": token})
     if not d:
         raise HTTPException(404, "Not found")
     return await _pdf_response(d, size)
@@ -654,7 +897,7 @@ async def print_data(did: str, request: Request):
     tok = request.headers.get("X-Print-Token", "")
     if not tok or not auth.verify_print_token(tok, did):
         raise HTTPException(401, "Invalid or expired print token")
-    d = await db.documents.find_one({"_id": oid(did)})
+    d = await docs.find_one({"_id": oid(did)})
     if not d:
         raise HTTPException(404, "Not found")
     s = ser(d)
@@ -672,7 +915,7 @@ async def health_pdf():
 # ---------------- exports ----------------
 @api.get("/documents/{did}/docx")
 async def document_docx(did: str, user=Depends(current_user)):
-    d = await db.documents.find_one({"_id": oid(did)})
+    d = await docs.find_one({"_id": oid(did)})
     if not d:
         raise HTTPException(404, "Not found")
     data = docx_export.build_docx(ser(d))
@@ -685,11 +928,11 @@ async def document_docx(did: str, user=Depends(current_user)):
 # ---------------- share ----------------
 @api.post("/documents/{did}/share")
 async def share_document(did: str, user=Depends(current_user)):
-    d = await db.documents.find_one({"_id": oid(did)})
+    d = await docs.find_one({"_id": oid(did)})
     if not d:
         raise HTTPException(404, "Not found")
     token = d.get("share_token") or secrets.token_urlsafe(16)
-    await db.documents.update_one({"_id": d["_id"]}, {"$set": {"share_token": token}})
+    await docs.update_one({"_id": d["_id"]}, {"$set": {"share_token": token}})
     return {"token": token, "id": did}
 
 
@@ -697,11 +940,11 @@ async def share_document(did: str, user=Depends(current_user)):
 async def share_view(token: str):
     if not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", token):
         raise HTTPException(404, "Not found")
-    d = await db.documents.find_one({"share_token": token})
+    d = await docs.find_one({"share_token": token})
     if not d:
         raise HTTPException(404, "Not found")
     if d.get("status") == "sent":
-        await db.documents.update_one({"_id": d["_id"]}, {"$set": {"status": "viewed"}})
+        await docs.update_one({"_id": d["_id"]}, {"$set": {"status": "viewed"}})
     s = ser(d)
     s["totals"] = compute_totals(d)
     return s
@@ -746,7 +989,7 @@ async def run_recurring(user=Depends(current_user)):
     today = datetime.now(timezone.utc).date()
     profile = await get_profile()
     created = 0
-    cursor = db.documents.find({"recurring.enabled": True})
+    cursor = docs.find({"recurring.enabled": True})
     async for src in cursor:
         rec = src.get("recurring", {})
         nd = rec.get("next_date")
@@ -760,7 +1003,7 @@ async def run_recurring(user=Depends(current_user)):
             await _clone(src, src["type"], profile, status="draft")
             created += 1
             nxt = _advance(nxt, rec.get("frequency", "monthly"))
-        await db.documents.update_one({"_id": src["_id"]},
+        await docs.update_one({"_id": src["_id"]},
                                       {"$set": {"recurring.next_date": nxt.isoformat()}})
     return {"created": created}
 
@@ -768,6 +1011,7 @@ async def run_recurring(user=Depends(current_user)):
 # ---------------- dashboard ----------------
 @api.get("/dashboard")
 async def dashboard(user=Depends(current_user)):
+    await refresh_overdue()
     today = datetime.now(timezone.utc).date().isoformat()
     month_key = today[:7]
     unpaid_invoice = {"type": "invoice", "status": {"$in": sorted(UNPAID_STATES)}}
@@ -800,7 +1044,7 @@ async def dashboard(user=Depends(current_user)):
         ],
         "count": [{"$count": "n"}],
     }}]
-    r = (await db.documents.aggregate(pipeline).to_list(1))[0]
+    r = (await docs.aggregate(pipeline).to_list(1))[0]
     first = lambda k, f: (r[k][0][f] if r[k] else 0)  # noqa: E731
     profile = await get_profile()
     cur = profile.get("default_currency", "USD")
@@ -824,7 +1068,7 @@ async def dashboard(user=Depends(current_user)):
 # ---------------- data export ----------------
 @api.get("/export/documents.json")
 async def export_documents_json(user=Depends(current_user)):
-    rows = await db.documents.find({}).to_list(10000)
+    rows = await docs.find({}).to_list(10000)
     data = [ser(r) for r in rows]
     return StreamingResponse(io.BytesIO(json.dumps(data, default=str, indent=2).encode()),
                              media_type="application/json",
@@ -832,8 +1076,9 @@ async def export_documents_json(user=Depends(current_user)):
 
 
 @api.get("/export/documents.csv")
-async def export_documents_csv(user=Depends(current_user)):
-    rows = await db.documents.find({}).to_list(10000)
+async def export_documents_csv(user=Depends(current_user), ids: str = ""):
+    q = {"_id": {"$in": [body_oid(i, "ids") for i in ids.split(",") if i.strip()]}} if ids.strip() else {}
+    rows = await docs.find(q).sort("created_at", -1).to_list(10000)
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(["number", "type", "status", "client", "currency", "total", "issue_date", "created_at"])
@@ -906,6 +1151,8 @@ INDEXES = [
     ("documents", [("share_token", 1)], {"unique": True, "sparse": True}),
     ("documents", [("type", 1)], {}),
     ("clients", [("name", 1)], {}),
+    ("documents", [("deleted_at", 1)], {}),
+    ("activity", [("doc_id", 1), ("at", -1)], {}),
 ]
 
 
@@ -920,6 +1167,7 @@ async def startup():
             logger.error(f"index {coll} {keys}: {e}")
     await auth.seed_admin(db)
     await get_profile()
+    await run_maintenance()
 
 
 @app.on_event("shutdown")

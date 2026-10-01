@@ -38,12 +38,12 @@ export const TYPE_MAP = Object.fromEntries(DOC_TYPES.map((t) => [t.id, t]));
 export const STATUSES = ["draft", "sent", "viewed", "paid", "overdue", "cancelled"];
 
 export const STATUS_META = {
-  draft: { label: "Draft", color: "#78746C", bg: "rgba(120,116,108,.14)" },
-  sent: { label: "Sent", color: "#2C5E8A", bg: "rgba(44,94,138,.14)" },
-  viewed: { label: "Viewed", color: "#7A5AA6", bg: "rgba(122,90,166,.14)" },
-  paid: { label: "Paid", color: "#2E6B48", bg: "rgba(46,107,72,.16)" },
-  overdue: { label: "Overdue", color: "#C04C20", bg: "rgba(192,76,32,.14)" },
-  cancelled: { label: "Cancelled", color: "#96918A", bg: "rgba(150,145,138,.14)" },
+  draft: { label: "Draft", color: "var(--st-draft)", bg: "rgba(120,116,108,.14)" },
+  sent: { label: "Sent", color: "var(--st-sent)", bg: "rgba(44,94,138,.14)" },
+  viewed: { label: "Viewed", color: "var(--st-viewed)", bg: "rgba(122,90,166,.14)" },
+  paid: { label: "Paid", color: "var(--st-paid)", bg: "rgba(46,107,72,.16)" },
+  overdue: { label: "Overdue", color: "var(--st-overdue)", bg: "rgba(192,76,32,.14)" },
+  cancelled: { label: "Cancelled", color: "var(--st-cancelled)", bg: "rgba(150,145,138,.14)" },
 };
 
 export function fmtDate(iso) {

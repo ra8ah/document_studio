@@ -6,6 +6,10 @@ import DocumentCanvas from "@/components/DocumentCanvas";
 import { DownloadMenu } from "@/components/DownloadMenu";
 import LoadError from "@/components/LoadError";
 import usePrintSetup from "@/hooks/usePrintSetup";
+import useIsMobile from "@/hooks/useIsMobile";
+import { useZoom, ZoomFrame, ZoomControls } from "@/components/Zoom";
+import MobileDocView from "@/components/MobileDocView";
+import { EditorSkeleton } from "@/components/Skeletons";
 import { CURRENCIES, STATUSES, STATUS_META, TYPE_MAP } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +69,6 @@ export default function DocumentEditor() {
   const [packages, setPackages] = useState([]);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareLink, setShareLink] = useState("");
-  const [scale, setScale] = useState(1);
   // save state machine: idle | dirty | saving | saved | error | conflict
   const [save, setSave] = useState({ state: "idle", at: null, msg: "" });
   const [, tick] = useState(0);
@@ -112,13 +115,15 @@ export default function DocumentEditor() {
 
   useEffect(() => {
     load();
-    const onResize = () => { const w = Math.min(window.innerWidth - 40, 900); setScale(Math.min(1, w / 816)); };
-    onResize(); window.addEventListener("resize", onResize);
     const t = setInterval(() => tick((n) => n + 1), 30000);
-    return () => { window.removeEventListener("resize", onResize); clearInterval(t); };
+    return () => clearInterval(t);
   }, [load]);
 
   usePrintSetup({ size: pageSize, theme });
+  const isMobile = useIsMobile();
+  const [mobileView, setMobileView] = useState(isMobile);
+  const canvasBox = useRef(null);
+  const zoom = useZoom(canvasBox, pageSize);
 
   // ---------------------------------------------------------------- save engine
   const buildPayload = () => {
@@ -204,6 +209,15 @@ export default function DocumentEditor() {
   const markDirtyRef = useRef(markDirty);
   markDirtyRef.current = markDirty;
 
+  // switching to the phone layout unmounts the editable canvas: save pending edits first
+  useEffect(() => {
+    if (!isMobile) { setMobileView(false); return; }
+    let live = true;
+    (dirtyRef.current ? flush() : Promise.resolve()).then(() => { if (live) setMobileView(true); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile]);
+
   // settings changes count as edits — compared with the values the document was loaded/reset with,
   // so loading, remounting or a no-op change never triggers an autosave
   const baselineRef = useRef("");
@@ -256,7 +270,8 @@ export default function DocumentEditor() {
   }, [keepaliveSave]);
 
   if (loadErr) return <LoadError notFound={loadErr === "notfound"} message={loadErr === "notfound" ? "Document not found. It may have been deleted." : undefined} onRetry={load} testid="editor-load-error" />;
-  if (!doc) return <div className="mono-label" role="status">Loading…</div>;
+  if (!doc) return <EditorSkeleton />;
+  if (mobileView) return <MobileDocView doc={doc} status={status} currency={currency} theme={theme} discount={discount} tax={tax} size={pageSize} onBack={() => nav("/documents")} />;
   const meta = TYPE_MAP[doc.type] || {};
   const showLineItems = meta.layout === "financial" || ["proposal", "maintenance_plan", "statement_of_work"].includes(doc.type);
   const isContent = meta.layout === "content";
@@ -308,7 +323,11 @@ export default function DocumentEditor() {
   }, "Couldn't mark as paid");
   const remove = guard(async () => {
     clearTimeout(timerRef.current); dirtyRef.current = false;
-    await api.delete(`/documents/${id}`); clearDraft(id); toast.success("Deleted"); nav("/documents");
+    await api.delete(`/documents/${id}`); clearDraft(id); nav("/documents");
+    toast.success(`${doc.number} moved to Trash`, {
+      duration: UNDO_MS,
+      action: { label: "Undo", onClick: () => api.post(`/documents/${id}/restore`).then(() => { toast.success("Restored"); nav(`/documents/${id}`); }, () => toast.error("Couldn't restore")) },
+    });
   }, "Couldn't delete");
 
   const doReset = guard(async (mode) => {
@@ -355,26 +374,26 @@ export default function DocumentEditor() {
     <div className="rise -m-6 sm:-m-10 lg:-m-12">
       {/* Toolbar */}
       <div className="sticky top-16 z-10 bg-background/90 backdrop-blur border-b border-foreground/10 px-4 sm:px-8 py-3 flex flex-wrap items-center gap-2">
-        <button onClick={() => nav("/documents")} className="p-2 rounded-full hover:bg-foreground/5" data-testid="editor-back"><ArrowLeft size={18} /></button>
+        <button onClick={() => nav("/documents")} className="p-2 rounded-full hover:bg-foreground/5" aria-label="Back to documents" data-testid="editor-back"><ArrowLeft size={18} aria-hidden="true" /></button>
         <div className="mr-2">
           <div className="mono-label">{meta.label}</div>
           <div className="font-mono text-sm font-medium">{doc.number}</div>
         </div>
 
         <Select value={status} onValueChange={setStatusNow}>
-          <SelectTrigger className="w-[130px] rounded-full h-9" data-testid="status-select">
+          <SelectTrigger className="w-[130px] rounded-full h-9" data-testid="status-select" aria-label="Status">
             <span className="w-2 h-2 rounded-full mr-1" style={{ background: s.color }} /><SelectValue />
           </SelectTrigger>
           <SelectContent>{STATUSES.map((x) => <SelectItem key={x} value={x}>{STATUS_META[x].label}</SelectItem>)}</SelectContent>
         </Select>
 
         <Select value={currency} onValueChange={setCurrency}>
-          <SelectTrigger className="w-[90px] rounded-full h-9" data-testid="currency-select"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[90px] rounded-full h-9" data-testid="currency-select" aria-label="Currency"><SelectValue /></SelectTrigger>
           <SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
 
         <Select value={pageSize} onValueChange={setPageSize}>
-          <SelectTrigger className="w-[110px] rounded-full h-9" data-testid="page-size-select"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[110px] rounded-full h-9" data-testid="page-size-select" aria-label="Paper size"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="A4" data-testid="page-size-a4">A4</SelectItem>
             <SelectItem value="Letter" data-testid="page-size-letter">US Letter</SelectItem>
@@ -382,15 +401,15 @@ export default function DocumentEditor() {
         </Select>
 
         <button onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))} data-testid="doc-theme-toggle"
-          className="p-2 rounded-full hover:bg-foreground/5 border border-foreground/15" title="Toggle paper theme">
+          className="p-2 rounded-full hover:bg-foreground/5 border border-foreground/15" title="Toggle paper theme" aria-label={theme === "light" ? "Switch paper to dark" : "Switch paper to light"} aria-pressed={theme === "dark"}>
           {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
         </button>
 
         <div role="status" aria-live="polite" className="flex items-center gap-2 text-xs ml-1" data-testid="save-status" data-state={save.state}>
           {saving && <Loader2 size={12} className="animate-spin" />}
-          <span className={save.state === "error" || save.state === "conflict" ? "text-[#C04C20] font-medium" : "text-muted-foreground"}>{label}</span>
+          <span className={save.state === "error" || save.state === "conflict" ? "text-[#A63F19] dark:text-[#E8774D] font-medium" : "text-muted-foreground"}>{label}</span>
           {(save.state === "error") && (
-            <button className="underline text-[#C04C20]" onClick={() => flush()} data-testid="save-retry">Retry</button>
+            <button className="underline text-[#A63F19] dark:text-[#E8774D]" onClick={() => flush()} data-testid="save-retry">Retry</button>
           )}
         </div>
 
@@ -410,7 +429,7 @@ export default function DocumentEditor() {
           )}
           {isContent && <Button variant="outline" size="sm" className="rounded-full gap-1" data-testid="add-section-button" onClick={() => canvasRef.current.addSection()}><Plus size={14} /> Section</Button>}
           {status === "draft" && (
-            <Button variant="outline" size="sm" className="rounded-full gap-1 text-[#C04C20] border-[#C04C20]/40 hover:bg-[#C04C20]/10" disabled={saving}
+            <Button variant="outline" size="sm" className="rounded-full gap-1 text-[#A63F19] dark:text-[#E8774D] border-[#C04C20]/40 hover:bg-[#C04C20]/10" disabled={saving}
               onClick={() => { setResetMode(null); setResetOpen(true); }} data-testid="reset-button"><Eraser size={14} /> Clear &amp; start fresh</Button>
           )}
 
@@ -419,14 +438,14 @@ export default function DocumentEditor() {
           <Button variant="outline" size="sm" className="rounded-full gap-1" onClick={share} data-testid="share-button"><Share2 size={14} /> Share</Button>
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="rounded-full px-2" data-testid="more-menu"><MoreVertical size={16} /></Button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="rounded-full px-2" data-testid="more-menu" aria-label="More actions"><MoreVertical size={16} aria-hidden="true" /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={duplicate} data-testid="duplicate-doc"><Copy size={14} className="mr-2" /> Duplicate</DropdownMenuItem>
               {CONVERT_LABEL[doc.type] && <DropdownMenuItem onClick={convert} data-testid="convert-doc"><RefreshCw size={14} className="mr-2" /> Convert to {TYPE_MAP[CONVERT_LABEL[doc.type]].label}</DropdownMenuItem>}
               {doc.type === "invoice" && <DropdownMenuItem onClick={markPaid} data-testid="mark-paid"><BadgeCheck size={14} className="mr-2" /> Mark as paid</DropdownMenuItem>}
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={saving} onClick={() => { setResetMode(null); setResetOpen(true); }} className="text-[#C04C20]" data-testid="reset-doc"><Eraser size={14} className="mr-2" /> Clear &amp; start fresh</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-[#C04C20]" data-testid="delete-doc"><Trash2 size={14} className="mr-2" /> Delete</DropdownMenuItem>
+              <DropdownMenuItem disabled={saving} onClick={() => { setResetMode(null); setResetOpen(true); }} className="text-[#A63F19] dark:text-[#E8774D]" data-testid="reset-doc"><Eraser size={14} className="mr-2" /> Clear &amp; start fresh</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-[#A63F19] dark:text-[#E8774D]" data-testid="delete-doc"><Trash2 size={14} className="mr-2" /> Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -440,21 +459,21 @@ export default function DocumentEditor() {
       {showLineItems && (
         <div className="px-4 sm:px-8 py-3 flex flex-wrap gap-6 border-b border-foreground/10 text-sm">
           <div className="flex items-center gap-2" data-testid="discount-controls">
-            <Switch checked={discount.enabled} onCheckedChange={(v) => setDiscount((d) => ({ ...d, enabled: v }))} data-testid="discount-toggle" />
+            <Switch checked={discount.enabled} onCheckedChange={(v) => setDiscount((d) => ({ ...d, enabled: v }))} data-testid="discount-toggle" aria-label="Discount" />
             <span className="mono-label">Discount</span>
             {discount.enabled && (<>
-              <Input className="w-20 h-8" value={discount.value} onChange={(e) => setDiscount((d) => ({ ...d, value: e.target.value }))} data-testid="discount-value" />
-              <Select value={discount.mode} onValueChange={(v) => setDiscount((d) => ({ ...d, mode: v }))}><SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">Fixed</SelectItem></SelectContent></Select>
-              <Input className="w-28 h-8" value={discount.label} onChange={(e) => setDiscount((d) => ({ ...d, label: e.target.value }))} placeholder="Label" />
+              <Input className="w-20 h-8" value={discount.value} onChange={(e) => setDiscount((d) => ({ ...d, value: e.target.value }))} data-testid="discount-value" aria-label="Discount value" />
+              <Select value={discount.mode} onValueChange={(v) => setDiscount((d) => ({ ...d, mode: v }))}><SelectTrigger className="w-24 h-8" aria-label="Discount type"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">Fixed</SelectItem></SelectContent></Select>
+              <Input className="w-28 h-8" value={discount.label} onChange={(e) => setDiscount((d) => ({ ...d, label: e.target.value }))} placeholder="Label" aria-label="Discount label" />
             </>)}
           </div>
           <div className="flex items-center gap-2" data-testid="tax-controls">
-            <Switch checked={tax.enabled} onCheckedChange={(v) => setTax((t) => ({ ...t, enabled: v }))} data-testid="tax-toggle" />
+            <Switch checked={tax.enabled} onCheckedChange={(v) => setTax((t) => ({ ...t, enabled: v }))} data-testid="tax-toggle" aria-label="Tax" />
             <span className="mono-label">Tax</span>
             {tax.enabled && (<>
-              <Input className="w-20 h-8" value={tax.value} onChange={(e) => setTax((t) => ({ ...t, value: e.target.value }))} data-testid="tax-value" />
-              <Select value={tax.mode} onValueChange={(v) => setTax((t) => ({ ...t, mode: v }))}><SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">Fixed</SelectItem></SelectContent></Select>
-              <Input className="w-28 h-8" value={tax.label} onChange={(e) => setTax((t) => ({ ...t, label: e.target.value }))} placeholder="Label (GST/VAT)" />
+              <Input className="w-20 h-8" value={tax.value} onChange={(e) => setTax((t) => ({ ...t, value: e.target.value }))} data-testid="tax-value" aria-label="Tax value" />
+              <Select value={tax.mode} onValueChange={(v) => setTax((t) => ({ ...t, mode: v }))}><SelectTrigger className="w-24 h-8" aria-label="Tax type"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="percent">%</SelectItem><SelectItem value="fixed">Fixed</SelectItem></SelectContent></Select>
+              <Input className="w-28 h-8" value={tax.label} onChange={(e) => setTax((t) => ({ ...t, label: e.target.value }))} placeholder="Label (GST/VAT)" aria-label="Tax label" />
             </>)}
           </div>
           <span className="mono-label self-center ml-auto text-muted-foreground">Click any text on the page to edit · changes save automatically</span>
@@ -462,10 +481,11 @@ export default function DocumentEditor() {
       )}
 
       {/* Canvas */}
-      <div className="py-8 px-2 overflow-x-auto" style={{ background: theme === "dark" ? "#141210" : "#E7E0D3" }}>
-        <div className="doc-zoom" style={{ zoom: scale }}>
-          <DocumentCanvas key={canvasKey} ref={canvasRef} doc={doc} currency={currency} theme={theme} discount={discount} tax={tax} size={pageSize} editable onChange={() => markDirtyRef.current()} />
-        </div>
+      <div ref={canvasBox} className="relative py-8 px-2 overflow-x-auto" style={{ background: theme === "dark" ? "#141210" : "#E7E0D3" }}>
+        <div className="sticky left-0 top-0 z-[5] flex justify-end px-2 -mt-4 mb-4"><div className="rounded-full bg-background/90 px-2 py-1 shadow-sm"><ZoomControls zoom={zoom} /></div></div>
+        <ZoomFrame scale={zoom.scale}>
+          <DocumentCanvas key={canvasKey} ref={canvasRef} doc={doc} currency={currency} theme={theme} discount={discount} tax={tax} size={pageSize} editable guides onChange={() => markDirtyRef.current()} />
+        </ZoomFrame>
       </div>
 
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
@@ -515,11 +535,11 @@ export default function DocumentEditor() {
         <AlertDialogContent data-testid="delete-dialog">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {doc.number}?</AlertDialogTitle>
-            <AlertDialogDescription>This permanently deletes the document and its share link. This can't be undone.</AlertDialogDescription>
+            <AlertDialogDescription>The document moves to Trash and its share link stops working. You can restore it from Trash for 30 days.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={remove} className="bg-[#C04C20] hover:bg-[#a63f19]" data-testid="delete-confirm">Delete</AlertDialogAction>
+            <AlertDialogAction onClick={remove} className="bg-[#C04C20] hover:bg-[#a63f19]" data-testid="delete-confirm">Move to Trash</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

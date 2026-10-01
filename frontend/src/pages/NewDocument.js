@@ -47,7 +47,7 @@ export default function NewDocument() {
                 selected ? "bg-[#2C2824] text-[#F2ECE0] border-[#2C2824] scale-[1.02]" : "bg-card border-foreground/10 hover:border-foreground/30"
               }`}>
               <div className="flex items-center justify-between">
-                <t.icon size={22} className={selected ? "text-[#E0673B]" : "text-[#C04C20]"} />
+                <t.icon size={22} className={selected ? "text-[#E0673B]" : "text-[#A63F19] dark:text-[#E8774D]"} />
                 <span className="mono-label" style={selected ? { color: "#A8A29A" } : {}}>{t.label.split(" ")[0]} / {t.code}</span>
               </div>
               <div className="headline text-xl mt-4">{t.label}</div>

@@ -22,3 +22,8 @@ root.render(
     </QueryClientProvider>
   </React.StrictMode>,
 );
+
+// PWA: static-asset cache only (public/sw.js). Production builds only, so dev hot reload is untouched.
+if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}

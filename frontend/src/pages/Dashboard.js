@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DashboardSkeleton } from "@/components/Skeletons";
 import LoadError from "@/components/LoadError";
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
@@ -28,7 +29,7 @@ export default function Dashboard() {
   }, []);
 
   if (err) return <LoadError onRetry={load} testid="dashboard-load-error" />;
-  if (!d) return <div className="mono-label" role="status">Loading…</div>;
+  if (!d) return <DashboardSkeleton />;
   // never add currencies together: headline = default currency, others listed separately
   const others = (by) => Object.entries(by || {}).filter(([c, v]) => c !== d.currency && v)
     .map(([c, v]) => money(v, c)).join(" · ");
@@ -57,7 +58,7 @@ export default function Dashboard() {
 
       {d.overdue.length > 0 && (
         <div className="rounded-2xl border border-[#C04C20]/30 bg-[#C04C20]/5 p-6">
-          <div className="flex items-center gap-2 mono-label text-[#C04C20]"><AlertTriangle size={14} /> Overdue / alerts</div>
+          <div className="flex items-center gap-2 mono-label text-[#A63F19] dark:text-[#E8774D]"><AlertTriangle size={14} /> Overdue / alerts</div>
           <div className="mt-4 divide-y divide-foreground/10">
             {d.overdue.map((o) => (
               <button key={o.id} onClick={() => nav(`/documents/${o.id}`)} data-testid={`overdue-${o.id}`}
@@ -79,7 +80,7 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center justify-between">
           <div className="mono-label">Recent documents / 02</div>
-          <button onClick={() => nav("/documents")} className="text-sm flex items-center gap-1 hover:text-[#C04C20]">
+          <button onClick={() => nav("/documents")} className="text-sm flex items-center gap-1 hover:text-[#A63F19] dark:text-[#E8774D]">
             View all <ArrowUpRight size={14} />
           </button>
         </div>

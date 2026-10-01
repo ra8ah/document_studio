@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Plus, Download, Upload } from "lucide-react";
 import { isSafeLogo } from "@/lib/print";
 import { toast } from "sonner";
+import { DetailSkeleton } from "@/components/Skeletons";
 import LoadError from "@/components/LoadError";
 
 const LOGO_TYPES = ["image/svg+xml", "image/png", "image/jpeg", "image/webp"];
@@ -44,7 +45,7 @@ export default function Settings() {
   }, [reload]);
 
   if (loadErr) return <LoadError onRetry={() => { setLoadErr(false); setReload((n) => n + 1); }} testid="settings-load-error" />;
-  if (!form) return <div className="mono-label" role="status">Loading…</div>;
+  if (!form) return <DetailSkeleton />;
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const setPrefix = (k) => (e) => setForm((f) => ({ ...f, prefixes: { ...(f.prefixes || {}), [k]: e.target.value } }));
 
@@ -172,7 +173,7 @@ export default function Settings() {
             {packages.map((p) => (
               <div key={p.id} className="flex items-center justify-between py-3">
                 <div><div className="font-medium">{p.description}</div><div className="mono-label">{p.sub} · {p.qty} × {p.rate}</div></div>
-                <button onClick={() => delPackage(p.id)} className="p-2 hover:text-[#C04C20]" data-testid={`del-package-${p.id}`}><Trash2 size={16} /></button>
+                <button onClick={() => delPackage(p.id)} className="p-2 hover:text-[#A63F19] dark:text-[#E8774D]" data-testid={`del-package-${p.id}`}><Trash2 size={16} /></button>
               </div>
             ))}
           </div>

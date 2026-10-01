@@ -15,7 +15,7 @@
     --secondary: 38 24% 85%;
     --secondary-foreground: 30 15% 11%;
     --muted: 38 20% 84%;
-    --muted-foreground: 40 6% 42%;
+    --muted-foreground: 40 6% 37%;
     --accent: 15 71% 44%;
     --accent-foreground: 0 0% 100%;
     --destructive: 15 71% 44%;
@@ -85,3 +85,18 @@
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / .4); border-radius: 999px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* visible focus everywhere (keyboard only) */
+:focus-visible { outline: 2px solid hsl(var(--ring, 15 71% 44%)); outline-offset: 2px; }
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [role="menuitem"]:focus-visible, [role="option"]:focus-visible,
+[role="checkbox"]:focus-visible, [role="switch"]:focus-visible, [role="combobox"]:focus-visible { outline: 2px solid #C04C20; outline-offset: 2px; }
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  .rise { animation: none !important; }
+}
+
+/* status colours: AA contrast on their tinted badges in both themes */
+:root { --st-draft:#5F5B54; --st-sent:#285A85; --st-viewed:#644790; --st-paid:#285E40; --st-overdue:#993A17; --st-cancelled:#67635C; }
+.dark { --st-draft:#B4AFA6; --st-sent:#86B5DE; --st-viewed:#BCA2E3; --st-paid:#74C493; --st-overdue:#F0906A; --st-cancelled:#A8A29A; }

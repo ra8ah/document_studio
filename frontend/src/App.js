@@ -13,11 +13,13 @@ import NewDocument from "@/pages/NewDocument";
 import DocumentEditor from "@/pages/DocumentEditor";
 import ShareView from "@/pages/ShareView";
 import PrintView from "@/pages/PrintView";
+import Trash from "@/pages/Trash";
+import { DashboardSkeleton } from "@/components/Skeletons";
 
 function Protected({ children }) {
   const { user } = useAuth();
   if (user === null)
-    return <div className="min-h-screen flex items-center justify-center mono-label">Loading…</div>;
+    return <div className="min-h-screen p-10 max-w-5xl mx-auto"><DashboardSkeleton /></div>;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
@@ -39,6 +41,7 @@ function App() {
               <Route path="/documents" element={<DocumentsList />} />
               <Route path="/documents/new" element={<NewDocument />} />
               <Route path="/documents/:id" element={<DocumentEditor />} />
+              <Route path="/trash" element={<Trash />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

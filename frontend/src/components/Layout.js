@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
-import { LayoutDashboard, FileText, Users, Settings as Cog, Moon, Sun, Command, LogOut, Plus, Menu } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Settings as Cog, Trash2, Moon, Sun, Command, LogOut, Plus, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import CommandPalette from "@/components/CommandPalette";
+import { useShortcuts, ShortcutsDialog } from "@/components/Shortcuts";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
   { to: "/", label: "Dashboard", code: "01", icon: LayoutDashboard },
   { to: "/documents", label: "Documents", code: "02", icon: FileText },
   { to: "/clients", label: "Clients", code: "03", icon: Users },
-  { to: "/settings", label: "Settings", code: "04", icon: Cog },
+  { to: "/trash", label: "Trash", code: "04", icon: Trash2 },
+  { to: "/settings", label: "Settings", code: "05", icon: Cog },
 ];
 
 export default function Layout() {
@@ -21,6 +23,7 @@ export default function Layout() {
   const loc = useLocation();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useShortcuts();
 
   useEffect(() => {
     const h = (e) => {
@@ -38,6 +41,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
+      <ShortcutsDialog open={helpOpen} setOpen={setHelpOpen} />
 
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r border-foreground/10 p-6 sticky top-0 h-screen">
@@ -56,7 +60,7 @@ export default function Layout() {
             >
               <n.icon size={17} />
               <span className="text-sm font-medium">{n.label}</span>
-              <span className="mono-label ml-auto opacity-60">{n.code}</span>
+              <span className={`mono-label ml-auto ${active(n.to) ? "!text-primary-foreground" : ""}`} aria-hidden="true">{n.code}</span>
             </Link>
           ))}
         </nav>
@@ -100,13 +104,13 @@ export default function Layout() {
           </Sheet>
           <button
             onClick={() => setPaletteOpen(true)}
-            data-testid="command-palette-button"
+            data-testid="command-palette-button" aria-label="Open command palette (Ctrl or Cmd + K)"
             className="flex items-center gap-2 rounded-full border border-foreground/15 px-4 py-2 text-sm text-muted-foreground hover:border-foreground/30 transition-colors"
           >
             <Command size={14} /><span className="hidden sm:inline">Quick actions</span> <kbd className="mono-label ml-2 hidden sm:inline">⌘K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-2">
-            <Button data-testid="new-document-button" onClick={() => nav("/documents/new")} className="rounded-full gap-2">
+            <Button data-testid="new-document-button" onClick={() => nav("/documents/new")} className="rounded-full gap-2" aria-label="New document">
               <Plus size={16} /><span className="hidden sm:inline">New document</span>
             </Button>
           </div>

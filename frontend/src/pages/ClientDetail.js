@@ -4,6 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { money, fmtDate, TYPE_MAP, STATUS_META } from "@/lib/format";
 import { ArrowLeft } from "lucide-react";
+import { ClientActions } from "@/components/ClientActions";
+import { DetailSkeleton } from "@/components/Skeletons";
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -20,16 +22,21 @@ export default function ClientDetail() {
   }, [id, reload]);
 
   if (err) return <LoadError notFound={err === "notfound"} message={err === "notfound" ? "Client not found." : undefined} onRetry={() => setReload((n) => n + 1)} testid="client-load-error" />;
-  if (!client) return <div className="mono-label" role="status">Loading…</div>;
+  if (!client) return <DetailSkeleton />;
 
   return (
     <div className="rise space-y-8">
-      <button onClick={() => nav("/clients")} className="flex items-center gap-2 mono-label hover:text-[#C04C20]">
+      <button onClick={() => nav("/clients")} className="flex items-center gap-2 mono-label hover:text-[#A63F19] dark:text-[#E8774D]">
         <ArrowLeft size={14} /> Back to clients
       </button>
       <div>
-        <div className="mono-label">Client / {client.currency}</div>
-        <h1 className="headline text-4xl sm:text-5xl mt-2">{client.name}<span className="dotaccent">.</span></h1>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="mono-label">Client / {client.currency}{client.archived && <span className="ml-2 px-2 py-0.5 rounded-full bg-foreground/10" data-testid="client-archived-badge">Archived</span>}</div>
+            <h1 className="headline text-4xl sm:text-5xl mt-2">{client.name}<span className="dotaccent">.</span></h1>
+          </div>
+          <ClientActions client={client} onChange={setClient} />
+        </div>
         <div className="grid sm:grid-cols-3 gap-6 mt-6 text-sm">
           <div><div className="mono-label mb-1">Company</div>{client.company || "—"}</div>
           <div><div className="mono-label mb-1">Email</div>{client.email || "—"}</div>
