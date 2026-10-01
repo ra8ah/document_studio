@@ -113,3 +113,11 @@ in frame mode).
 `backend/Dockerfile` is a slim `python:3.11-slim` image (FastAPI, Motor, python-docx) running as an
 unprivileged `app` user. There's no browser in the image. DOCX export (`GET /api/documents/{id}/docx`)
 is unchanged. The former `/api/documents/{id}/pdf` and `/api/share/{token}/pdf` routes have been removed.
+
+---
+
+## Deployment, database and security
+
+- **DEPLOY.md**: Vercel (frontend, `/api` rewrite proxy, security headers) + Docker backend on Render/Railway + Atlas, with the full environment-variable list and the `/api/health` health check.
+- **DATABASE.md**: migrating local data to Atlas (dry-run first), scheduled encrypted backups, restore procedure.
+- **PRE_LAUNCH_CHECKLIST.md**: deferred security items (credential rotation, history scrub, …).

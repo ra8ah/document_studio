@@ -119,3 +119,15 @@ frontend:
 agent_communication:
   - agent: "main"
     message: "Server PDF removed by design (backend_test.py test_pdf_a4/test_pdf_letter/share-pdf assertion now 404 = expected). Regression-test existing features + new print UI."
+
+  - task: "Atlas/Vercel hardening: paginated lists, 401->refresh interceptor, relative /api base, lax cookies"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/lib/api.js, frontend/src/components/Pager.js, frontend/src/pages/DocumentsList.js, frontend/src/pages/Clients.js, frontend/src/pages/NewDocument.js, backend/server.py, backend/auth.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "backend/tests/test_hardening.py 83/83 (run with -n 0). Needs full UI regression + pagination + session refresh."

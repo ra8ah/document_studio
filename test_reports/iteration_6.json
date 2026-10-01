@@ -1,0 +1,21 @@
+{
+  "summary": "Hardening + Vercel/Atlas regression validated. Backend: pytest tests/test_hardening.py -n 0 = 83/83 pass (with REACT_APP_BACKEND_URL exported to the preview URL). Frontend end-to-end: login/logout, dashboard renders Revenue/Outstanding/Unpaid/Overdue cards, documents pagination summary '1–25 of 27' then '26–27 of 27' with 27 API-seeded invoices, clients pagination '1–25 of 26' then '26–26 of 26' with 26 API-seeded clients, client search 'TEST_C_1' resets to page 1 (summary '1–11 of 11'), documents literal regex search '(' / '.*' does not error (returns 'No documents match.'), command palette opens on Meta+K, session refresh works (deleting only access_token and reloading /documents keeps user on /documents; deleting both cookies redirects to /login). Backend-level checks for malformed IDs, whitelist 422s, aggregation dashboard, cookie flags and CORS already verified by test_hardening.py.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_hardening.py",
+    "/app/test_reports/pytest/pytest_hardening.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "GET /api/auth/me response includes a raw '_id' field (MongoDB ObjectId leak) instead of a renamed 'id'. Not blocking because the frontend doesn't appear to depend on this field name, and other endpoints (/api/auth/login, /api/documents) correctly return 'id'. Consider normalizing /api/auth/me to also return 'id' for consistency."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (83/83 test_hardening; backend_test.py deltas are the known/expected removed-PDF 404s)", "frontend": "100%"},
+  "test_credentials": "Admin from /app/memory/test_credentials.md works (cookie auth).",
+  "seed_data_creation": "During testing: 27 throw-away invoices + 26 throw-away clients via API; all deleted at the end. counters collection emptied (documents collection confirmed empty afterwards), so the user's next real invoice will be INV-0001.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "test_hardening.py REQUIRES exporting REACT_APP_BACKEND_URL (or passing it in env) and running with -n 0; otherwise it silently falls back to http://localhost:8001 and the refresh-cookie round-trip + ingress preflight checks will fail. Key testids: documents-pager, documents-pager-summary, documents-pager-next, documents-pager-prev, documents-pager-page, clients-pager, clients-pager-summary, clients-pager-next, command-palette. Login lands on '/' (not /dashboard). To seed many docs quickly, POST /api/documents {type:'invoice'} using the browser's session cookie via page.evaluate(fetch(..., {credentials:'include'})). Always clean up docs+clients+packages at the end and, if documents collection is empty, drop the counters collection to keep numbering starting at 0001.",
+  "rca of the issue": "No bugs found. All acceptance criteria from the review request are satisfied."
+}
