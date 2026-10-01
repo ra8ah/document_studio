@@ -43,16 +43,36 @@ def create_refresh_token(user_id: str) -> str:
     return jwt.encode(payload, get_jwt_secret(), algorithm=JWT_ALGORITHM)
 
 
+_SAMESITE_VALUES = {"lax", "strict", "none"}
+
+
+def cookie_samesite() -> str:
+    """SameSite for auth cookies, from COOKIE_SAMESITE (default "lax").
+
+    "lax" is right when the browser talks to the API first-party (Vercel rewrite /api -> backend,
+    or the same host). Use "none" only if the frontend calls the backend cross-site directly.
+    """
+    v = (os.environ.get("COOKIE_SAMESITE") or "lax").strip().lower()
+    if v not in _SAMESITE_VALUES:
+        raise RuntimeError(f"COOKIE_SAMESITE must be one of {sorted(_SAMESITE_VALUES)}")
+    return v
+
+
+def _cookie_opts() -> dict:
+    return {"httponly": True, "secure": True, "samesite": cookie_samesite(), "path": "/"}
+
+
 def set_auth_cookies(response, access_token: str, refresh_token: str):
-    response.set_cookie(key="access_token", value=access_token, httponly=True,
-                        secure=True, samesite="none", max_age=3600, path="/")
-    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True,
-                        secure=True, samesite="none", max_age=604800, path="/")
+    opts = _cookie_opts()
+    response.set_cookie(key="access_token", value=access_token, max_age=3600, **opts)
+    response.set_cookie(key="refresh_token", value=refresh_token, max_age=604800, **opts)
 
 
 def clear_auth_cookies(response):
-    response.delete_cookie("access_token", path="/")
-    response.delete_cookie("refresh_token", path="/")
+    # attributes must match the ones used when setting, or some browsers keep the cookie
+    opts = _cookie_opts()
+    response.delete_cookie("access_token", **opts)
+    response.delete_cookie("refresh_token", **opts)
 
 
 def _extract_token(request: Request):
@@ -72,7 +92,10 @@ async def get_current_user_from(request: Request, db) -> dict:
         payload = jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
         if payload.get("type") != "access":
             raise HTTPException(status_code=401, detail="Invalid token type")
-        user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+        sub = payload.get("sub")
+        if not isinstance(sub, str) or not ObjectId.is_valid(sub):
+            raise HTTPException(status_code=401, detail="Invalid token")
+        user = await db.users.find_one({"_id": ObjectId(sub)})
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         user["_id"] = str(user["_id"])

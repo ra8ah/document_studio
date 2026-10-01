@@ -19,6 +19,8 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
+from bson.errors import InvalidId
+from pymongo.errors import DuplicateKeyError
 from pydantic import BaseModel
 
 import auth
@@ -28,8 +30,32 @@ from docdata import build_default_data, default_line_items
 import docx_export
 
 mongo_url = os.environ["MONGO_URL"]
-client = AsyncIOMotorClient(mongo_url)
+# Works for local MongoDB and Atlas (mongodb+srv://). Pool sized for small hosts / Atlas M0 (500 conn cap).
+client = AsyncIOMotorClient(
+    mongo_url,
+    maxPoolSize=int(os.environ.get("MONGO_MAX_POOL_SIZE", "20")),
+    minPoolSize=0,
+    serverSelectionTimeoutMS=int(os.environ.get("MONGO_SERVER_SELECTION_TIMEOUT_MS", "5000")),
+    connectTimeoutMS=10000,
+    retryWrites=True,
+    appname="document-studio",
+)
 db = client[os.environ["DB_NAME"]]
+
+
+def _cors_origins() -> list:
+    """CORS must be explicit: credentials are enabled, so "*" (or nothing) is refused at startup."""
+    raw = os.environ.get("CORS_ORIGINS", "")
+    origins = [o.strip().rstrip("/") for o in raw.split(",") if o.strip()]
+    if not origins:
+        raise RuntimeError("CORS_ORIGINS is required (comma-separated list of allowed origins)")
+    if "*" in origins:
+        raise RuntimeError('CORS_ORIGINS must not contain "*" while credentials are enabled')
+    return origins
+
+
+CORS_ORIGINS = _cors_origins()
+auth.cookie_samesite()  # validate COOKIE_SAMESITE at startup
 
 app = FastAPI()
 api = APIRouter(prefix="/api")
@@ -44,11 +70,70 @@ DEFAULT_PREFIXES = {
     "thank_you_doc": "THX", "letterhead": "LTR", "expense_report": "EXP",
 }
 UNPAID_STATES = {"draft", "sent", "viewed", "overdue"}
+STATUSES = {"draft", "sent", "viewed", "paid", "overdue", "cancelled"}
+DOC_SORT_FIELDS = {"created_at", "updated_at", "number", "client_name", "status", "type", "total"}
+MAX_PAGE_SIZE = 100
 
 
 # ---------------- helpers ----------------
 async def current_user(request: Request):
     return await auth.get_current_user_from(request, db)
+
+
+def oid(value, detail: str = "Not found") -> ObjectId:
+    """Parse a path id; malformed ids are a clean 404 instead of a 500."""
+    if isinstance(value, ObjectId):
+        return value
+    if not isinstance(value, str) or not ObjectId.is_valid(value):
+        raise HTTPException(404, detail)
+    return ObjectId(value)
+
+
+def body_oid(value, field: str) -> ObjectId:
+    """Parse an id supplied in a request body; malformed -> 422."""
+    if not isinstance(value, str) or not ObjectId.is_valid(value):
+        raise HTTPException(422, f"Invalid {field}")
+    return ObjectId(value)
+
+
+def search_regex(text: str) -> dict:
+    """Case-insensitive *literal* match: user text is escaped, never interpreted as a regex."""
+    return {"$regex": re.escape(text.strip()[:100]), "$options": "i"}
+
+
+def page_params(page: int, page_size: int):
+    if page < 1:
+        raise HTTPException(422, "page must be >= 1")
+    if page_size < 1 or page_size > MAX_PAGE_SIZE:
+        raise HTTPException(422, f"page_size must be between 1 and {MAX_PAGE_SIZE}")
+    return (page - 1) * page_size, page_size
+
+
+def page_envelope(items, total: int, page: int, page_size: int) -> dict:
+    return {"items": items, "total": total, "page": page, "page_size": page_size,
+            "pages": max(1, -(-total // page_size))}
+
+
+def _num(expr):
+    return {"$convert": {"input": expr, "to": "double", "onError": 0.0, "onNull": 0.0}}
+
+
+# Same maths as renderer.compute_totals, evaluated inside MongoDB.
+_SUBTOTAL = {"$sum": {"$map": {"input": {"$ifNull": ["$line_items", []]}, "as": "i",
+                                "in": {"$multiply": [_num("$$i.qty"), _num("$$i.rate")]}}}}
+TOTAL_EXPR = {"$let": {"vars": {"sub": _SUBTOTAL}, "in": {"$let": {
+    "vars": {"base": {"$subtract": ["$$sub", {"$cond": [
+        {"$eq": ["$discount.enabled", True]},
+        {"$cond": [{"$eq": ["$discount.mode", "percent"]},
+                   {"$divide": [{"$multiply": ["$$sub", _num("$discount.value")]}, 100]},
+                   _num("$discount.value")]},
+        0]}]}},
+    "in": {"$add": ["$$base", {"$cond": [
+        {"$eq": ["$tax.enabled", True]},
+        {"$cond": [{"$eq": ["$tax.mode", "percent"]},
+                   {"$divide": [{"$multiply": ["$$base", _num("$tax.value")]}, 100]},
+                   _num("$tax.value")]},
+        0]}]}}}}}
 
 
 def ser(doc: dict) -> dict:
@@ -81,6 +166,17 @@ async def next_number(dtype: str, profile: dict) -> str:
     return f"{prefix}-{seq:04d}"
 
 
+# ---------------- health ----------------
+@api.get("/health")
+async def health():
+    try:
+        await db.command("ping")
+        return {"status": "ok", "database": "ok"}
+    except Exception:
+        logger.exception("health: database ping failed")
+        return JSONResponse(status_code=503, content={"status": "error", "database": "unreachable"})
+
+
 # ---------------- auth ----------------
 class LoginIn(BaseModel):
     email: str
@@ -97,7 +193,8 @@ async def login(body: LoginIn, response: Response):
     at = auth.create_access_token(uid, email)
     rt = auth.create_refresh_token(uid)
     auth.set_auth_cookies(response, at, rt)
-    return {"id": uid, "email": email, "name": user.get("name", "Admin"), "role": user.get("role", "admin"), "token": at}
+    # tokens live only in httpOnly cookies; never in the response body
+    return {"id": uid, "email": email, "name": user.get("name", "Admin"), "role": user.get("role", "admin")}
 
 
 @api.get("/auth/me")
@@ -121,7 +218,11 @@ async def refresh(request: Request, response: Response):
         payload = jwt.decode(token, auth.get_jwt_secret(), algorithms=[auth.JWT_ALGORITHM])
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=401, detail="Invalid token")
-        u = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+        sub = payload.get("sub")
+        u = await db.users.find_one({"_id": ObjectId(sub)}) if isinstance(sub, str) and ObjectId.is_valid(sub) else None
+        if not u:
+            auth.clear_auth_cookies(response)
+            raise HTTPException(status_code=401, detail="User no longer exists")
         at = auth.create_access_token(str(u["_id"]), u["email"])
         rt = auth.create_refresh_token(str(u["_id"]))
         auth.set_auth_cookies(response, at, rt)
@@ -171,13 +272,15 @@ async def update_profile(body: dict, user=Depends(current_user)):
 
 # ---------------- clients ----------------
 @api.get("/clients")
-async def list_clients(user=Depends(current_user), search: str = ""):
+async def list_clients(user=Depends(current_user), search: str = "", page: int = 1, page_size: int = 25):
+    skip, limit = page_params(page, page_size)
     q = {}
-    if search:
-        rx = {"$regex": search, "$options": "i"}
+    if search.strip():
+        rx = search_regex(search)
         q = {"$or": [{"name": rx}, {"company": rx}, {"email": rx}]}
-    rows = await db.clients.find(q).sort("name", 1).to_list(1000)
-    return [ser(r) for r in rows]
+    total = await db.clients.count_documents(q)
+    rows = await db.clients.find(q).sort([("name", 1), ("_id", 1)]).skip(skip).limit(limit).to_list(limit)
+    return page_envelope([ser(r) for r in rows], total, page, page_size)
 
 
 @api.post("/clients")
@@ -190,7 +293,7 @@ async def create_client(body: ClientIn, user=Depends(current_user)):
 
 @api.get("/clients/{cid}")
 async def get_client(cid: str, user=Depends(current_user)):
-    c = await db.clients.find_one({"_id": ObjectId(cid)})
+    c = await db.clients.find_one({"_id": oid(cid, "Client not found")})
     if not c:
         raise HTTPException(404, "Client not found")
     return ser(c)
@@ -198,18 +301,25 @@ async def get_client(cid: str, user=Depends(current_user)):
 
 @api.put("/clients/{cid}")
 async def update_client(cid: str, body: ClientIn, user=Depends(current_user)):
-    await db.clients.update_one({"_id": ObjectId(cid)}, {"$set": body.model_dump()})
-    return ser(await db.clients.find_one({"_id": ObjectId(cid)}))
+    _id = oid(cid, "Client not found")
+    r = await db.clients.update_one({"_id": _id}, {"$set": body.model_dump()})
+    if not r.matched_count:
+        raise HTTPException(404, "Client not found")
+    return ser(await db.clients.find_one({"_id": _id}))
 
 
 @api.delete("/clients/{cid}")
 async def delete_client(cid: str, user=Depends(current_user)):
-    await db.clients.delete_one({"_id": ObjectId(cid)})
+    r = await db.clients.delete_one({"_id": oid(cid, "Client not found")})
+    if not r.deleted_count:
+        raise HTTPException(404, "Client not found")
     return {"ok": True}
 
 
 @api.get("/clients/{cid}/documents")
 async def client_documents(cid: str, user=Depends(current_user)):
+    if not await db.clients.find_one({"_id": oid(cid, "Client not found")}, {"_id": 1}):
+        raise HTTPException(404, "Client not found")
     rows = await db.documents.find({"client_id": cid}).sort("created_at", -1).to_list(1000)
     return [ser(r) for r in rows]
 
@@ -218,7 +328,7 @@ async def client_documents(cid: str, user=Depends(current_user)):
 async def _build_document(dtype: str, client_id, theme, currency, profile):
     cl = None
     if client_id:
-        cl = await db.clients.find_one({"_id": ObjectId(client_id)})
+        cl = await db.clients.find_one({"_id": body_oid(client_id, "client_id")})
     number = await next_number(dtype, profile)
     cur = currency or (cl.get("currency") if cl else None) or profile.get("default_currency", "USD")
     data = build_default_data(dtype, profile, cl or {}, number)
@@ -231,7 +341,7 @@ async def _build_document(dtype: str, client_id, theme, currency, profile):
         "discount": {"enabled": False, "mode": "percent", "value": 0, "label": "Discount"},
         "tax": {"enabled": False, "mode": "percent", "value": 0, "label": "Tax"},
         "recurring": {"enabled": False, "frequency": "monthly", "next_date": None},
-        "share_token": None, "paid_date": None,
+        "paid_date": None,  # share_token is only set once shared (unique sparse index)
         "created_at": now, "updated_at": now,
     }
     return doc
@@ -251,29 +361,42 @@ async def create_document(body: DocumentIn, user=Depends(current_user)):
 
 @api.get("/documents")
 async def list_documents(user=Depends(current_user), search: str = "", type: str = "",
-                         status: str = "", sort: str = "-created_at"):
+                         status: str = "", sort: str = "-created_at", page: int = 1, page_size: int = 25):
+    skip, limit = page_params(page, page_size)
     q = {}
     if type:
+        if type not in TYPE_META:
+            raise HTTPException(422, "Unknown document type")
         q["type"] = type
     if status:
+        if status not in STATUSES:
+            raise HTTPException(422, "Unknown status")
         q["status"] = status
-    if search:
-        rx = {"$regex": search, "$options": "i"}
+    if search.strip():
+        rx = search_regex(search)
         q["$or"] = [{"number": rx}, {"client_name": rx}, {"data.project_reference": rx}]
     field = sort.lstrip("-")
+    if field not in DOC_SORT_FIELDS:
+        raise HTTPException(422, f"sort must be one of {sorted(DOC_SORT_FIELDS)} (prefix - for descending)")
     direction = -1 if sort.startswith("-") else 1
-    rows = await db.documents.find(q).sort(field, direction).to_list(2000)
-    out = []
-    for r in rows:
-        s = ser(r)
-        s["total"] = compute_totals(r)["total"]
-        out.append(s)
-    return out
+    pipeline = [{"$match": q}]
+    if field == "total":
+        pipeline.append({"$addFields": {"total": TOTAL_EXPR}})
+    pipeline += [
+        {"$sort": {field: direction, "_id": direction}},
+        {"$facet": {
+            "items": [{"$skip": skip}, {"$limit": limit}, {"$addFields": {"total": TOTAL_EXPR}}],
+            "count": [{"$count": "n"}],
+        }},
+    ]
+    res = (await db.documents.aggregate(pipeline).to_list(1))[0]
+    total = res["count"][0]["n"] if res["count"] else 0
+    return page_envelope([ser(r) for r in res["items"]], total, page, page_size)
 
 
 @api.get("/documents/{did}")
 async def get_document(did: str, user=Depends(current_user)):
-    d = await db.documents.find_one({"_id": ObjectId(did)})
+    d = await db.documents.find_one({"_id": oid(did)})
     if not d:
         raise HTTPException(404, "Not found")
     s = ser(d)
@@ -288,13 +411,16 @@ async def update_document(did: str, body: DocumentUpdate, user=Depends(current_u
         update["data"]["logo_url"] = validate_logo(update["data"].get("logo_url"))
     if "line_items" in update:
         update["line_items"] = [dict(i) for i in update["line_items"]]
+    _id = oid(did)
     if "client_id" in update and update["client_id"]:
-        cl = await db.clients.find_one({"_id": ObjectId(update["client_id"])})
+        cl = await db.clients.find_one({"_id": body_oid(update["client_id"], "client_id")})
         if cl:
             update["client_name"] = cl.get("name", "")
     update["updated_at"] = datetime.now(timezone.utc).isoformat()
-    await db.documents.update_one({"_id": ObjectId(did)}, {"$set": update})
-    d = await db.documents.find_one({"_id": ObjectId(did)})
+    r = await db.documents.update_one({"_id": _id}, {"$set": update})
+    if not r.matched_count:
+        raise HTTPException(404, "Not found")
+    d = await db.documents.find_one({"_id": _id})
     s = ser(d)
     s["totals"] = compute_totals(d)
     return s
@@ -302,16 +428,23 @@ async def update_document(did: str, body: DocumentUpdate, user=Depends(current_u
 
 @api.delete("/documents/{did}")
 async def delete_document(did: str, user=Depends(current_user)):
-    await db.documents.delete_one({"_id": ObjectId(did)})
+    r = await db.documents.delete_one({"_id": oid(did)})
+    if not r.deleted_count:
+        raise HTTPException(404, "Not found")
     return {"ok": True}
 
 
 @api.post("/documents/{did}/status")
 async def set_status(did: str, body: dict, user=Depends(current_user)):
     status = body.get("status")
-    await db.documents.update_one({"_id": ObjectId(did)},
-                                  {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}})
-    return ser(await db.documents.find_one({"_id": ObjectId(did)}))
+    if status not in STATUSES:
+        raise HTTPException(422, f"status must be one of {sorted(STATUSES)}")
+    _id = oid(did)
+    r = await db.documents.update_one({"_id": _id},
+                                      {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    if not r.matched_count:
+        raise HTTPException(404, "Not found")
+    return ser(await db.documents.find_one({"_id": _id}))
 
 
 async def _clone(src: dict, target_type: str, profile: dict, status="draft"):
@@ -327,7 +460,7 @@ async def _clone(src: dict, target_type: str, profile: dict, status="draft"):
         "data": data, "line_items": [dict(i) for i in src.get("line_items", [])],
         "discount": dict(src.get("discount", {})), "tax": dict(src.get("tax", {})),
         "recurring": {"enabled": False, "frequency": "monthly", "next_date": None},
-        "share_token": None, "paid_date": None,
+        "paid_date": None,
         "created_at": now, "updated_at": now,
     }
     r = await db.documents.insert_one(new)
@@ -336,7 +469,7 @@ async def _clone(src: dict, target_type: str, profile: dict, status="draft"):
 
 @api.post("/documents/{did}/duplicate")
 async def duplicate_document(did: str, user=Depends(current_user)):
-    src = await db.documents.find_one({"_id": ObjectId(did)})
+    src = await db.documents.find_one({"_id": oid(did)})
     if not src:
         raise HTTPException(404, "Not found")
     profile = await get_profile()
@@ -348,10 +481,12 @@ CONVERT_MAP = {"quotation": "invoice", "proposal": "statement_of_work", "invoice
 
 @api.post("/documents/{did}/convert")
 async def convert_document(did: str, body: dict, user=Depends(current_user)):
-    src = await db.documents.find_one({"_id": ObjectId(did)})
+    src = await db.documents.find_one({"_id": oid(did)})
     if not src:
         raise HTTPException(404, "Not found")
     target = body.get("target_type") or CONVERT_MAP.get(src["type"])
+    if target and target not in TYPE_META:
+        raise HTTPException(422, "Unknown target_type")
     if not target:
         raise HTTPException(400, "No conversion available for this type")
     profile = await get_profile()
@@ -367,11 +502,11 @@ async def convert_document(did: str, body: dict, user=Depends(current_user)):
 
 @api.post("/documents/{did}/mark-paid")
 async def mark_paid(did: str, user=Depends(current_user)):
-    src = await db.documents.find_one({"_id": ObjectId(did)})
+    src = await db.documents.find_one({"_id": oid(did)})
     if not src:
         raise HTTPException(404, "Not found")
     today = datetime.now(timezone.utc).date().isoformat()
-    await db.documents.update_one({"_id": ObjectId(did)},
+    await db.documents.update_one({"_id": src["_id"]},
                                   {"$set": {"status": "paid", "paid_date": today,
                                             "updated_at": datetime.now(timezone.utc).isoformat()}})
     receipt = None
@@ -387,7 +522,7 @@ async def mark_paid(did: str, user=Depends(current_user)):
 # ---------------- exports ----------------
 @api.get("/documents/{did}/docx")
 async def document_docx(did: str, user=Depends(current_user)):
-    d = await db.documents.find_one({"_id": ObjectId(did)})
+    d = await db.documents.find_one({"_id": oid(did)})
     if not d:
         raise HTTPException(404, "Not found")
     data = docx_export.build_docx(ser(d))
@@ -400,16 +535,18 @@ async def document_docx(did: str, user=Depends(current_user)):
 # ---------------- share ----------------
 @api.post("/documents/{did}/share")
 async def share_document(did: str, user=Depends(current_user)):
-    d = await db.documents.find_one({"_id": ObjectId(did)})
+    d = await db.documents.find_one({"_id": oid(did)})
     if not d:
         raise HTTPException(404, "Not found")
     token = d.get("share_token") or secrets.token_urlsafe(16)
-    await db.documents.update_one({"_id": ObjectId(did)}, {"$set": {"share_token": token}})
+    await db.documents.update_one({"_id": d["_id"]}, {"$set": {"share_token": token}})
     return {"token": token, "id": did}
 
 
 @api.get("/share/{token}")
 async def share_view(token: str):
+    if not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", token):
+        raise HTTPException(404, "Not found")
     d = await db.documents.find_one({"share_token": token})
     if not d:
         raise HTTPException(404, "Not found")
@@ -435,7 +572,9 @@ async def create_package(body: PackageIn, user=Depends(current_user)):
 
 @api.delete("/packages/{pid}")
 async def delete_package(pid: str, user=Depends(current_user)):
-    await db.packages.delete_one({"_id": ObjectId(pid)})
+    r = await db.packages.delete_one({"_id": oid(pid)})
+    if not r.deleted_count:
+        raise HTTPException(404, "Not found")
     return {"ok": True}
 
 
@@ -479,47 +618,50 @@ async def run_recurring(user=Depends(current_user)):
 # ---------------- dashboard ----------------
 @api.get("/dashboard")
 async def dashboard(user=Depends(current_user)):
-    docs = await db.documents.find({}).to_list(5000)
-    today = datetime.now(timezone.utc).date()
-    month_key = today.strftime("%Y-%m")
-    outstanding = 0.0
-    unpaid_count = 0
-    overdue = []
-    this_month_revenue = 0.0
-    for d in docs:
-        total = compute_totals(d)["total"]
-        if d["type"] == "invoice" and d.get("status") in UNPAID_STATES:
-            outstanding += total
-            unpaid_count += 1
-            due = (d.get("data") or {}).get("due_date")
-            try:
-                if due and date.fromisoformat(due) < today:
-                    overdue.append({"id": str(d["_id"]), "number": d.get("number"),
-                                    "client_name": d.get("client_name", ""), "total": total,
-                                    "currency": d.get("currency"), "due_date": due})
-            except Exception:
-                pass
-        if d.get("status") == "paid" and d["type"] in ("invoice", "receipt"):
-            pd = d.get("paid_date") or ""
-            if pd.startswith(month_key):
-                this_month_revenue += total
-    recent = await db.documents.find({}).sort("created_at", -1).to_list(8)
-    recent_out = []
-    for r in recent:
-        s = ser(r)
-        s["total"] = compute_totals(r)["total"]
-        recent_out.append(s)
-    # currency for headline stats = default
+    today = datetime.now(timezone.utc).date().isoformat()
+    month_key = today[:7]
+    unpaid_invoice = {"type": "invoice", "status": {"$in": sorted(UNPAID_STATES)}}
+    pipeline = [{"$facet": {
+        "outstanding": [
+            {"$match": unpaid_invoice},
+            {"$group": {"_id": None, "sum": {"$sum": TOTAL_EXPR}, "n": {"$sum": 1}}},
+        ],
+        "overdue": [
+            # ISO YYYY-MM-DD strings compare chronologically; malformed dates are ignored
+            {"$match": {**unpaid_invoice, "data.due_date": {"$regex": r"^\d{4}-\d{2}-\d{2}$", "$lt": today}}},
+            {"$sort": {"data.due_date": 1}},
+            {"$limit": 100},
+            {"$project": {"_id": 0, "id": {"$toString": "$_id"}, "number": 1, "client_name": {"$ifNull": ["$client_name", ""]},
+                          "total": TOTAL_EXPR, "currency": 1, "due_date": "$data.due_date"}},
+        ],
+        "overdue_count": [
+            {"$match": {**unpaid_invoice, "data.due_date": {"$regex": r"^\d{4}-\d{2}-\d{2}$", "$lt": today}}},
+            {"$count": "n"},
+        ],
+        "revenue": [
+            {"$match": {"status": "paid", "type": {"$in": ["invoice", "receipt"]},
+                        "paid_date": {"$regex": "^" + re.escape(month_key)}}},
+            {"$group": {"_id": None, "sum": {"$sum": TOTAL_EXPR}}},
+        ],
+        "recent": [
+            {"$sort": {"created_at": -1}},
+            {"$limit": 8},
+            {"$addFields": {"total": TOTAL_EXPR}},
+        ],
+        "count": [{"$count": "n"}],
+    }}]
+    r = (await db.documents.aggregate(pipeline).to_list(1))[0]
+    first = lambda k, f: (r[k][0][f] if r[k] else 0)  # noqa: E731
     profile = await get_profile()
     return {
-        "outstanding": outstanding,
-        "unpaid_count": unpaid_count,
-        "this_month_revenue": this_month_revenue,
-        "overdue": overdue,
-        "overdue_count": len(overdue),
-        "recent": recent_out,
+        "outstanding": float(first("outstanding", "sum")),
+        "unpaid_count": int(first("outstanding", "n")),
+        "this_month_revenue": float(first("revenue", "sum")),
+        "overdue": r["overdue"],
+        "overdue_count": int(first("overdue_count", "n")),
+        "recent": [ser(x) for x in r["recent"]],
         "currency": profile.get("default_currency", "USD"),
-        "total_documents": len(docs),
+        "total_documents": int(first("count", "n")),
     }
 
 
@@ -570,22 +712,56 @@ app.include_router(api)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=CORS_ORIGINS,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+
+
+@app.exception_handler(InvalidId)
+async def _invalid_id(request: Request, exc: InvalidId):
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
+
+
+@app.exception_handler(DuplicateKeyError)
+async def _duplicate_key(request: Request, exc: DuplicateKeyError):
+    return JSONResponse(status_code=409, content={"detail": "A record with this value already exists"})
+
+
+async def ensure_index(coll, keys, **opts):
+    """Idempotent create_index: recreates an index whose key matches but options differ."""
+    want = {"unique": bool(opts.get("unique")), "sparse": bool(opts.get("sparse"))}
+    for name, spec in (await coll.index_information()).items():
+        if name != "_id_" and list(spec["key"]) == list(keys):
+            if {"unique": bool(spec.get("unique")), "sparse": bool(spec.get("sparse"))} == want:
+                return name
+            logger.info(f"index {coll.name}.{name}: options changed, recreating")
+            await coll.drop_index(name)
+    return await coll.create_index(keys, **opts)
+
+
+INDEXES = [
+    ("users", [("email", 1)], {"unique": True}),
+    ("documents", [("number", 1)], {"unique": True}),
+    ("documents", [("client_id", 1)], {}),
+    ("documents", [("status", 1), ("type", 1)], {}),
+    ("documents", [("created_at", -1)], {}),
+    ("documents", [("share_token", 1)], {"unique": True, "sparse": True}),
+    ("documents", [("type", 1)], {}),
+    ("clients", [("name", 1)], {}),
+]
 
 
 @app.on_event("startup")
 async def startup():
+    # sparse indexes still index explicit nulls: drop legacy "share_token: null" fields first
+    await db.documents.update_many({"share_token": None}, {"$unset": {"share_token": ""}})
+    for coll, keys, opts in INDEXES:
+        try:
+            await ensure_index(db[coll], keys, **opts)
+        except Exception as e:  # e.g. duplicate numbers in legacy data: keep serving, log loudly
+            logger.error(f"index {coll} {keys}: {e}")
     await auth.seed_admin(db)
-    try:
-        await db.users.create_index("email", unique=True)
-        await db.clients.create_index("name")
-        await db.documents.create_index("type")
-        await db.documents.create_index("share_token")
-    except Exception as e:
-        logger.warning(f"index: {e}")
     await get_profile()
 
 

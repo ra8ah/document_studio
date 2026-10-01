@@ -6,6 +6,37 @@ require("dotenv").config();
 // Craco sets NODE_ENV=development for start, NODE_ENV=production for build
 const isDevServer = process.env.NODE_ENV !== "production";
 
+// Production builds: no inline runtime chunk, so a strict CSP (script-src 'self') works.
+if (!isDevServer && process.env.INLINE_RUNTIME_CHUNK === undefined) {
+  process.env.INLINE_RUNTIME_CHUNK = "false";
+}
+
+const PROD_DESCRIPTION = "Studio — business document system";
+
+// Production builds: drop everything between <!-- emergent:dev-only:start/end --> in
+// public/index.html (preview tooling script, analytics snippet, platform meta description).
+// Fails open with a warning; scripts/check-build.js is the hard gate on Vercel.
+class StripDevOnlyHtmlPlugin {
+  apply(compiler) {
+    compiler.hooks.compilation.tap("StripDevOnlyHtml", (compilation) => {
+      try {
+        const HtmlPlugin = (compiler.options.plugins || [])
+          .map((pl) => pl && pl.constructor)
+          .find((c) => c && c.name === "HtmlWebpackPlugin" && typeof c.getHooks === "function");
+        if (!HtmlPlugin) throw new Error("HtmlWebpackPlugin not found");
+        HtmlPlugin.getHooks(compilation).afterTemplateExecution.tap("StripDevOnlyHtml", (data) => {
+          data.html = data.html
+            .replace(/<!-- emergent:dev-only:start -->[\s\S]*?<!-- emergent:dev-only:end -->/g, "")
+            .replace("</title>", `</title><meta name="description" content="${PROD_DESCRIPTION}" />`);
+          return data;
+        });
+      } catch (err) {
+        console.warn("[strip-dev-only-html] skipped:", err instanceof Error ? err.message : err);
+      }
+    });
+  }
+}
+
 // Environment variable overrides
 const config = {
   enableHealthCheck: process.env.ENABLE_HEALTH_CHECK === "true",
@@ -128,6 +159,10 @@ let webpackConfig = {
         webpackConfig.plugins.push(healthPluginInstance);
       }
 
+      if (!isDevServer) {
+        webpackConfig.plugins.push(new StripDevOnlyHtmlPlugin());
+      }
+
       // Overlay's HTML injection + compile-error capture; self-gates on mode !== development.
       if (emergentOverlay) {
         webpackConfig.plugins.push(emergentOverlay.webpackPlugin);
@@ -164,13 +199,11 @@ if (isDevServer) {
     const { withVisualEdits } = require("@emergentbase/visual-edits/craco");
     webpackConfig = withVisualEdits(webpackConfig);
   } catch (err) {
-    if (err.code === 'MODULE_NOT_FOUND' && err.message.includes('@emergentbase/visual-edits/craco')) {
-      console.warn(
-        "[visual-edits] @emergentbase/visual-edits not installed — visual editing disabled."
-      );
-    } else {
-      throw err;
-    }
+    // Fail open on ANY error: optional tooling must never break the dev server.
+    console.warn(
+      "[visual-edits] not loaded — visual editing disabled:",
+      err instanceof Error ? err.message : err,
+    );
   }
 }
 

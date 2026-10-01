@@ -10,6 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import Pager from "@/components/Pager";
+
+const PAGE_SIZE = 25;
 
 const EMPTY = { name: "", company: "", email: "", phone: "", address: "", tax_id: "", currency: "INR", notes: "" };
 
@@ -21,9 +24,17 @@ export default function Clients() {
   const [editId, setEditId] = useState(null);
   const nav = useNavigate();
 
-  const load = (q = "") => api.get("/clients", { params: { search: q } }).then((r) => setClients(r.data));
-  useEffect(() => { load(); }, []);
-  useEffect(() => { const t = setTimeout(() => load(search), 250); return () => clearTimeout(t); }, [search]);
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState(null);
+  const load = (q = search, p = page) => api.get("/clients", { params: { search: q, page: p, page_size: PAGE_SIZE } })
+    .then((r) => {
+      // deleting the last row of the last page: step back a page
+      if (r.data.items.length === 0 && p > 1) { setPage(p - 1); return; }
+      setClients(r.data.items); setMeta(r.data);
+    });
+  useEffect(() => { setPage(1); }, [search]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { const t = setTimeout(() => load(search, page), 250); return () => clearTimeout(t); }, [search, page]);
 
   const openNew = () => { setForm(EMPTY); setEditId(null); setOpen(true); };
   const openEdit = (c) => { setForm({ ...EMPTY, ...c }); setEditId(c.id); setOpen(true); };
@@ -79,6 +90,7 @@ export default function Clients() {
           ))}
         </div>
       )}
+      <Pager meta={meta} onPage={setPage} testid="clients-pager" />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">

@@ -14,7 +14,8 @@ export default function NewDocument() {
   const [creating, setCreating] = useState(false);
   const nav = useNavigate();
 
-  useEffect(() => { api.get("/clients").then((r) => setClients(r.data)); }, []);
+  // client picker: first 100 clients alphabetically (API max page size)
+  useEffect(() => { api.get("/clients", { params: { page_size: 100 } }).then((r) => setClients(r.data.items)); }, []);
 
   const create = async () => {
     if (!type) return toast.error("Choose a document type");

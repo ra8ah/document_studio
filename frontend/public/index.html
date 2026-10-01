@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#000000" />
-        <meta name="description" content="A product of emergent.sh" />
+        <!-- emergent:dev-only:start --><meta name="description" content="A product of emergent.sh" /><!-- emergent:dev-only:end -->
         <!-- Self-hosted fonts (no external font requests; required for print fidelity) -->
         <link rel="preload" href="%PUBLIC_URL%/fonts/Poppins-500-latin.woff2" as="font" type="font/woff2" crossorigin />
         <link rel="preload" href="%PUBLIC_URL%/fonts/Poppins-400-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -24,8 +24,10 @@
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
         <title>Studio — Document System</title>
+        <!-- emergent:dev-only:start -->
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
+        <!-- emergent:dev-only:end -->
     </head>
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -40,6 +42,7 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+        <!-- emergent:dev-only:start -->
         <script>
             !(function (t, e) {
                 var o, n, p, r;
@@ -111,5 +114,6 @@
                 },
             });
         </script>
+        <!-- emergent:dev-only:end -->
     </body>
 </html>

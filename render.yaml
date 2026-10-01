@@ -1,0 +1,28 @@
+# Render Blueprint (optional; you can also create the service by hand, see DEPLOY.md).
+# Secrets use `sync: false`, so Render asks for their values in the dashboard; nothing secret lives here.
+services:
+  - type: web
+    name: document-studio-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: document_studio
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: COOKIE_SAMESITE
+        value: lax
+      - key: MONGO_MAX_POOL_SIZE
+        value: "20"

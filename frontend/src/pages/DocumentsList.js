@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus } from "lucide-react";
+import Pager from "@/components/Pager";
+
+const PAGE_SIZE = 25;
 
 export default function DocumentsList() {
   const [docs, setDocs] = useState([]);
@@ -13,13 +16,19 @@ export default function DocumentsList() {
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("-created_at");
+  const [page, setPage] = useState(1);
+  const [meta, setMeta] = useState(null);
   const nav = useNavigate();
 
-  const load = () => api.get("/documents", {
-    params: { search, type: type === "all" ? "" : type, status: status === "all" ? "" : status, sort },
-  }).then((r) => setDocs(r.data));
+  // any filter change starts again from page 1
+  useEffect(() => { setPage(1); }, [search, type, status, sort]);
 
-  useEffect(() => { const t = setTimeout(load, 200); return () => clearTimeout(t); }, [search, type, status, sort]);
+  useEffect(() => {
+    const t = setTimeout(() => api.get("/documents", {
+      params: { search, type: type === "all" ? "" : type, status: status === "all" ? "" : status, sort, page, page_size: PAGE_SIZE },
+    }).then((r) => { setDocs(r.data.items); setMeta(r.data); }), 200);
+    return () => clearTimeout(t);
+  }, [search, type, status, sort, page]);
 
   return (
     <div className="rise space-y-8">
@@ -51,6 +60,8 @@ export default function DocumentsList() {
             <SelectItem value="created_at">Oldest first</SelectItem>
             <SelectItem value="-number">Number ↓</SelectItem>
             <SelectItem value="number">Number ↑</SelectItem>
+            <SelectItem value="-total">Amount ↓</SelectItem>
+            <SelectItem value="total">Amount ↑</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -79,6 +90,7 @@ export default function DocumentsList() {
           })}
         </div>
       )}
+      <Pager meta={meta} onPage={setPage} testid="documents-pager" />
     </div>
   );
 }

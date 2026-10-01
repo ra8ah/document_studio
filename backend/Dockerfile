@@ -22,5 +22,9 @@ USER app
 
 EXPOSE 8001
 
+# Same endpoint Render/Railway use (pings MongoDB)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/api/health' % os.environ.get('PORT','8001'), timeout=4)" || exit 1
+
 # Hosts provide $PORT; default to 8001 locally
 CMD ["sh", "-c", "exec uvicorn server:app --host 0.0.0.0 --port ${PORT:-8001}"]

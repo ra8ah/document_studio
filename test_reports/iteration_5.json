@@ -1,0 +1,71 @@
+{
+  "summary": "Iteration 5 validated the shift from server-side PDF to client-side native browser print, A4/US Letter page-size selector, Settings>Brand logo-upload flow, print-emulation isolation, DOCX export, and share-page UX. Backend: test_print_api.py = 9/9 pass; backend_test.py = 29 pass + 3 known/expected 404 failures for the removed PDF routes (TestDocuments::test_pdf_a4, test_pdf_letter, last assertion of test_share) — NOT reported as bugs per request. Frontend end-to-end flows all pass on the preview URL.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_print_api.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_print.xml",
+    "/app/test_reports/pytest/pytest_all.xml"
+  ],
+  "action_items": [
+    "None blocking. Optional nit: pytest.ini forces `-n 2 --dist loadscope`; when REACT_APP_BACKEND_URL is NOT exported in the shell, test_print_api.py defaults BASE to http://localhost:8001 and xdist workers appear to lose cookie auth across requests. Running `pytest -n 0` with REACT_APP_BACKEND_URL exported makes all 9 pass. Consider either (a) having test_print_api.py read REACT_APP_BACKEND_URL from frontend/.env as the backend_test.py suite does, or (b) adding BASE validation that fails fast if it points at localhost."
+  ],
+  "critical_code_review_comments": [
+    "test_print_api.py reads only backend/.env for env; REACT_APP_BACKEND_URL lives in frontend/.env, so BASE silently defaults to http://localhost:8001 unless exported externally. Low priority but easy to improve robustness."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% of in-scope tests (test_print_api 9/9; backend_test 29/32 — 3 failures are the intentionally removed PDF routes)",
+    "frontend": "100%"
+  },
+  "test_credentials": "Admin from /app/memory/test_credentials.md works (cookie + bearer).",
+  "seed_data_creation": "During testing: 3 throw-away invoices (INV-0002, plus 2 earlier) + 1 statement_of_work (SOW-0001) + 1 receipt (REC-0001) from pytest runs. All were deleted. Profile logo cleared back to ''. Documents collection empty, counters collection reset — the user's next real invoice will be INV-0001. default_currency verified = 'INR'.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Key verified testids: print-button, print-hint, print-hint-size, print-confirm, page-size-select, page-size-a4, page-size-letter, document-canvas, canvas-add-line-item, remove-line-item, save-document-button, export-menu (NOT 'export-menu-trigger'), export-docx, share-button, share-link-input, share-page-size-select, logo-upload-input, logo-preview, logo-remove, doc-logo. New-document flow: /documents/new -> click Invoice tile -> click 'Create & edit' button -> lands on /documents/{id}. Login lands on '/' not '/dashboard'. Export menu now contains ONLY 'Word · DOCX' (no PDF items). Canvas widths measured at full-scale: A4=793.69px, Letter=816px. Print-emulation (page.emulate_media(media='print')) correctly hides sidebar/header/toolbar/add+remove buttons via display:none; only document-canvas remains visible. Share page has no `<a href>` containing 'pdf'. Settings>Brand has NO text 'Logo URL' input — only Upload + preview + Remove. Uploaded PNG becomes a data: URI in logo-preview src and renders as [data-testid=doc-logo] in the invoice masthead.",
+  "verification_evidence": {
+    "backend": {
+      "server_pdf_routes_removed_404": true,
+      "share_pdf_route_removed_404": true,
+      "docx_export_200_and_PK_header": true,
+      "page_size_default_A4_and_Letter_persist_B5_422": true,
+      "logo_remote_url_rejected_400": true,
+      "logo_data_png_accepted_200": true,
+      "logo_data_svg_with_script_rejected_400": true,
+      "logo_data_gif_rejected_400": true,
+      "logo_clean_svg_accepted_200": true,
+      "logo_empty_string_accepted_200": true
+    },
+    "frontend": {
+      "login_dashboard_load": true,
+      "new_invoice_create": true,
+      "invoice_hero_heading_and_label_visible": true,
+      "print_button_opens_hint_popover": true,
+      "print_hint_shows_A4_then_US_Letter": true,
+      "print_confirm_calls_window_print": true,
+      "export_menu_only_docx_no_pdf_items": true,
+      "docx_download_works": "INV-0002.docx downloaded",
+      "canvas_width_A4_~794px": "793.69",
+      "canvas_width_Letter_~816px": "816",
+      "page_size_persists_after_save_reload": "US Letter preserved",
+      "hero_and_INV_label_preserved_after_reload": true,
+      "print_media_emulation_hides_chrome_only_canvas_visible": true,
+      "share_page_renders_canvas_with_print_button_and_page_size_select": true,
+      "share_page_has_no_old_pdf_anchor_links": true,
+      "share_page_mobile_390px_no_horizontal_overflow": true,
+      "settings_brand_no_logo_url_text_input": true,
+      "settings_logo_upload_preview_save_toast": true,
+      "doc_logo_appears_in_new_invoice_masthead_after_upload": true,
+      "logo_remove_and_save_restores_empty_state": true
+    }
+  },
+  "rca of the issue": "No bugs found. The 3 failing tests inside backend_test.py (test_pdf_a4, test_pdf_letter, last line of test_share) are intentional — the server-side PDF endpoints were removed and now return 404; this is the designed behavior for the new client-side-print architecture and must NOT be fixed."
+}

@@ -1,0 +1,52 @@
+# Scheduled logical backup of MongoDB Atlas (M0 has no automated backups).
+# Off until the repository variable ATLAS_BACKUP_ENABLED is set to "true".
+# Needs: secret ATLAS_BACKUP_URI (use a READ-ONLY Atlas user), secret BACKUP_PASSPHRASE,
+#        variable ATLAS_DB_NAME. Output: an AES-256 (gpg) encrypted artifact kept for 30 days.
+name: atlas-backup
+
+on:
+  schedule:
+    - cron: "30 2 * * *"   # daily 02:30 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: ${{ vars.ATLAS_BACKUP_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install "pymongo==4.6.3"
+      - name: Dump
+        env:
+          MONGO_URL: ${{ secrets.ATLAS_BACKUP_URI }}
+          DB_NAME: ${{ vars.ATLAS_DB_NAME }}
+        run: python scripts/mongo_backup.py backup --out backups
+      - name: Verify checksums and counts
+        run: python scripts/mongo_backup.py verify "$(ls -d backups/*/ | head -1)"
+      - name: Encrypt
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          test -n "$BACKUP_PASSPHRASE" || { echo "BACKUP_PASSPHRASE secret is required"; exit 1; }
+          name="$(basename "$(ls -d backups/*/ | head -1)")"
+          tar -C backups -czf - "$name" | gpg --batch --yes --pinentry-mode loopback \
+            --passphrase "$BACKUP_PASSPHRASE" --symmetric --cipher-algo AES256 -o "$name.tar.gz.gpg"
+          rm -rf backups
+          echo "ARTIFACT=$name" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.gz.gpg
+          retention-days: 30
+          if-no-files-found: error
