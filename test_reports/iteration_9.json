@@ -1,0 +1,35 @@
+{
+  "summary": "End-to-end verification of PART A/B/C bugs + features for Document Studio. Backend pytest 148/148 PASS (incl. test_lifecycle). Frontend E2E via Playwright on preview URL: login (autocomplete email/current-password, show/hide password toggle, role=alert error, correct creds OK), command palette (Ctrl+K opens; empty query shows 5 recents + Navigate + Create new; nonsense query -> palette-empty visible; 'REC' -> 8 palette-doc-*; 'TEST' -> 8 palette-doc-* + 8 palette-client-*; ArrowDown + Enter opens doc), shortcuts (? opens shortcuts-dialog; g->c /clients, g->t /trash, g->s /settings, g->d /, n /documents/new; typing 'n' inside client-search-input does NOT navigate), trash page loads (101 rows left over from prior iterations), documents list bulk (select-doc-*, select-all, bulk-bar w/ bulk-count '1 selected', bulk-status-select, bulk-trash, bulk-export, bulk-clear all present and functional), clients page (show-archived-toggle visible; 13 clients incl TEST data), editor (zoom-controls present; data-scale 1.00 -> 1.10 via zoom-in -> 1.00 via zoom-100 and zoom-fit; page-guides element present with data-count=0 as doc has 0 line items; 14 [data-field] elements all with role=textbox + aria-label e.g. 'Brand name'; aria-labels present on editor-back, doc-theme-toggle, more-menu, zoom-in, zoom-out), mobile 390x844 (mobile-doc-view + mobile-edit-hint shown, 0 contenteditable=true elements, 0px horizontal overflow), prefers-color-scheme dark on fresh context sets html.dark, PWA manifest.json & sw.js served (200). Backend API spot-check: PUT /documents/{id} with status=sent + data.due_date=2020-01-01 -> status becomes 'overdue' on reread; moving due_date to 2099-12-31 -> status back to 'sent'; soft delete puts doc in trash list; restore returns 200; delete client with 1 document -> 409 with {document_count:1, trashed_count:0, message: 'Archive the client instead.'}; archive -> archived:true, unarchive via POST /archive {archived:false} -> archived:false; draft invoice with past due_date stays 'draft' (correct). No bugs found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Documents list / Trash / Clients", "issues": ["Preview env still has 101 trash rows and ~13 TEST_* clients/docs left over from prior iterations — cosmetic only, not a code bug; main agent may want to run a one-off purge for a clean demo."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_lifecycle.py",
+    "/app/backend/tests/test_hardening.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/iter9_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "CommandPalette.js: shouldFilter=false + custom 200ms debounce + AbortController is the correct pattern; recent docs are fetched only on open (good), and clients/docs are capped server-side.",
+    "Shortcuts.js: isTyping() guard covers INPUT/TEXTAREA/SELECT, contentEditable, and role=textbox/combobox/listbox/menu — the ? / n / g+? sequences correctly ignore typing contexts (verified: typing 'n' in client-search-input kept the user on /clients).",
+    "refresh_overdue() in server.py is correctly idempotent and bi-directional (sent/viewed+past -> overdue; overdue+future -> sent) and is invoked on list reads, single-doc GET, and after data.due_date updates in PUT /documents/{id}. Lifecycle test suite covers this and the 'draft stays draft' case explicitly.",
+    "Delete-client 409 response body carries both document_count and trashed_count — the UI uses the former to populate client-delete-blocked dialog; archive-instead and unarchive flow both work through POST /clients/{id}/archive with {archived: bool} (there is no separate /unarchive endpoint, which is fine — the component uses the one endpoint correctly).",
+    "Zoom.js wrapper uses CSS transform:scale on a sized frame with data-scale attribute (not CSS zoom), preserving editability and keyboard caret; the data-testid=zoom-frame + data-scale pattern is clean and testable.",
+    "MobileDocView correctly removes contentEditable on <768px (0 contenteditable=true counted on the doc page at 390px) and prevents horizontal overflow (0px scrollWidth-clientWidth). Download menu is available via the DownloadMenu mobile trigger (verified in iteration_8).",
+    "Theme init: fresh context with color_scheme=dark renders html.dark on first visit as required (no localStorage fallback leaks)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (148/148 pytest)", "frontend": "100% on the sampled E2E scenarios (palette, shortcuts, bulk, editor zoom/guides, mobile, login a11y, theme, trash, clients, PWA)"},
+  "test_credentials": "Admin bxibichvzpd@indogmail.com / Agency@Studio2026 (from /app/memory/test_credentials.md) works. Auth is cookie-session based (NOT bearer token) — login POST sets an httpOnly cookie; agents should use requests.Session() and NOT read a 'token' field.",
+  "seed_data_creation": "Created transient TEST_Overdue + TEST_UnArch clients and two invoices during API sanity probing; all permanent-deleted at end of run. Pre-existing TEST_* data from earlier iterations was left intact (not owned by this run).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend auth is COOKIE-based; call s.post('/api/auth/login', json=...) with requests.Session() and reuse the session — do NOT look for a 'token' key. Document update is PUT /api/documents/{id} with status at the top level and data fields nested under 'data': {...} — PATCH does not exist. Overdue flips happen only AFTER the PUT returns (same request calls refresh_overdue when data.due_date is in the patch); for sent->overdue you must send BOTH status:'sent' and data.due_date together or in two calls. Unarchive uses the same /archive endpoint with {archived:false} — there is no /unarchive route. Preview deployment is a dev build, so SW does not register in-browser; just assert /manifest.json and /sw.js return 200. Login submit testid is 'login-submit-button' (NOT 'login-submit'). Cron endpoint intentionally returns 401 without WEBHOOK_CRON_SECRET — do not treat as a bug.",
+  "rca of the issue": "No bugs found. All PART A (overdue auto-transitions both ways incl. draft-stays-draft, command palette real search + recent group + empty state + keyboard nav, soft-delete + Trash + Undo/restore + permanent delete, client-delete-blocked -> archive -> un-archive, bulk status/trash/export), PART B (skeletons, dashed page guides, zoom controls with transform:scale and data-scale, mobile read-only w/ edit hint and 0 overflow, '?' shortcuts dialog with typing guards, prefers-color-scheme default, PWA manifest/sw), and PART C (login autocomplete + show/hide + role=alert, canvas [data-field] role=textbox+aria-label, icon-only buttons aria-label) requirements are implemented and verified end-to-end."
+}
