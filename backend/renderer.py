@@ -76,6 +76,7 @@ TYPE_META = {
     "welcome_doc": {"label": "Welcome", "layout": "content"},
     "thank_you_doc": {"label": "Thank You", "layout": "content"},
     "letterhead": {"label": "Letterhead", "layout": "letterhead"},
+    "expense_report": {"label": "Expense Report", "layout": "financial"},
 }
 
 LEGAL_NOTE_TYPES = {"service_agreement", "nda", "statement_of_work"}
@@ -204,6 +205,7 @@ def _footer(d):
 def _financial_body(doc, d, currency):
     t = compute_totals(doc)
     is_receipt = doc.get("type") == "receipt"
+    is_expense = doc.get("type") == "expense_report"
     rows = ""
     for it in (doc.get("line_items") or []):
         amt = float(it.get("qty", 0) or 0) * float(it.get("rate", 0) or 0)
@@ -223,11 +225,17 @@ def _financial_body(doc, d, currency):
         tax_row = f'<div class="row"><span class="mono">{escape(tax.get("label","Tax"))}</span><span class="v">{fmt_money(t["tax"],currency)}</span></div>'
 
     hero_right = '<div class="paidstamp">PAID</div>' if is_receipt else ""
-    total_label = "Amount paid" if is_receipt else "Total due"
+    total_label = "Total reimbursable" if is_expense else ("Amount paid" if is_receipt else "Total due")
+    party1_label = "Submitted to" if is_expense else ("Received from" if is_receipt else "Bill to")
+    party3_label = "Date" if is_expense else ("Payment date" if is_receipt else "Issue date")
+    paydetails_label = "Reimburse to" if is_expense else "Payment details"
 
-    due_block = "" if is_receipt else f"""<div class="mono">Due date</div><div class="val">{escape(d.get('due_date',''))}</div>"""
-    pay_second = ""
-    if is_receipt:
+    due_block = "" if (is_receipt or is_expense) else f"""<div class="mono">Due date</div><div class="val">{escape(d.get('due_date',''))}</div>"""
+    if is_expense:
+        pay_second = f"""<div><div class="mono">Notes</div>
+          <p>{escape(d.get('payment_terms',''))}</p>
+          <p class="note">{escape(d.get('note',''))}</p></div>"""
+    elif is_receipt:
         pay_second = f"""<div><div class="mono">Payment received</div>
           <p>{escape(d.get('payment_method','Bank transfer'))}</p>
           <p class="note">{escape(d.get('paid_date',''))}</p></div>"""
@@ -242,13 +250,13 @@ def _financial_body(doc, d, currency):
     {hero_right}
   </div>
   <div class="parties">
-    <div><div class="mono">{'Received from' if is_receipt else 'Bill to'}</div>
+    <div><div class="mono">{party1_label}</div>
       <div class="name">{escape(d.get('bill_to_name',''))}</div>
       <div class="sub">{escape(d.get('bill_to_lines',''))}</div></div>
     <div><div class="mono">From</div>
       <div class="name">{escape(d.get('from_name',''))}</div>
       <div class="sub">{escape(d.get('from_lines',''))}</div></div>
-    <div><div class="mono">{'Payment date' if is_receipt else 'Issue date'}</div>
+    <div><div class="mono">{party3_label}</div>
       <div class="val">{escape(d.get('issue_date',''))}</div>
       {due_block}</div>
   </div>
@@ -271,7 +279,7 @@ def _financial_body(doc, d, currency):
     </div>
   </div>
   <div class="pay">
-    <div><div class="mono">Payment details</div><p>{escape(d.get('payment_details',''))}</p></div>
+    <div><div class="mono">{paydetails_label}</div><p>{escape(d.get('payment_details',''))}</p></div>
     {pay_second}
   </div>"""
 

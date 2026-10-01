@@ -124,10 +124,17 @@ def build_default_data(dtype: str, profile: dict, client: dict, number: str) -> 
         d["payment_method"] = "Bank transfer"
         d["paid_date"] = today.isoformat()
         d["reference_label"] = "Payment for"
+    if dtype == "expense_report":
+        d["reference_label"] = "Purpose"
+        d["billing_note"] = "All expenses listed are business-related and supported by receipts available on request."
+        d["payment_terms"] = "Please reimburse within 14 days of approval."
+        d["footer_line"] = "Submitted for reimbursement."
     return d
 
 
 def default_line_items(dtype: str):
+    if dtype == "expense_report":
+        return [{"description": "Expense item", "sub": "Category \u00b7 date", "qty": 1, "rate": 0}]
     if TYPE_META.get(dtype, {}).get("layout") == "financial" or dtype in ("proposal", "maintenance_plan", "statement_of_work"):
         return [{"description": "New service", "sub": "Short description", "qty": 1, "rate": 0}]
     return []

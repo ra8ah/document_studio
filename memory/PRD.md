@@ -19,7 +19,8 @@ Internal, premium web app for a digital agency to create, manage and export prof
 Single admin login · Dashboard (revenue, outstanding, unpaid, overdue, recent) · 3-click doc creation · Command palette (Cmd+K) · Business profile settings (brand, contact, tax, bank, defaults, numbering prefixes) · Clients CRUD + search + client doc history · Inline-editable documents with line items, live totals, discount/tax (% or fixed), multi-currency, auto-numbering · Status tracking (draft/sent/viewed/paid/overdue/cancelled) · One-click convert (quotation→invoice, proposal→SOW, invoice→receipt) + duplicate + mark-paid→receipt · Saved packages · Recurring invoices · PDF (A4/Letter) + DOCX export · Private share links · Search/filter/sort · CSV/JSON export · Responsive + app dark mode.
 
 ## Implemented (2026-06)
-- Auth (JWT cookies, admin seed), all 12 document types (financial / content / letterhead layouts), light + dark paper variants.
+- Auth (JWT cookies, admin seed), all 13 document types (financial / content / letterhead layouts), light + dark paper variants.
+- 2026-06: Added **Expense Report** (13th type, financial layout, prefix EXP): relabelled Submitted to / From / Date, Purpose, Reimburse to + Notes, "Total reimbursable" block (no due date / PAID stamp). Verified: A4/Letter PDF + DOCX 200.
 - Dashboard, Clients + detail, Settings (incl. packages + data export), Documents list with filters/sort, New Document flow, full Document Editor (inline edit, line items, discount/tax, currency, theme, status, export, share, duplicate, convert, mark-paid, delete), public Share view.
 - Server PDF (A4 + Letter) and DOCX, CSV/JSON export, recurring draft generation, command palette.
 - Verified: backend 23/23 pytest pass; frontend E2E flows 100%.

@@ -40,7 +40,7 @@ DEFAULT_PREFIXES = {
     "invoice": "INV", "quotation": "QUO", "receipt": "REC", "proposal": "PRO",
     "statement_of_work": "SOW", "service_agreement": "MSA", "nda": "NDA",
     "project_status": "PSR", "maintenance_plan": "MSP", "welcome_doc": "WEL",
-    "thank_you_doc": "THX", "letterhead": "LTR",
+    "thank_you_doc": "THX", "letterhead": "LTR", "expense_report": "EXP",
 }
 UNPAID_STATES = {"draft", "sent", "viewed", "overdue"}
 

@@ -146,6 +146,11 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
   let body;
   if (layout === "financial") {
     const isReceipt = doc.type === "receipt";
+    const isExpense = doc.type === "expense_report";
+    const party1Label = isExpense ? "Submitted to" : isReceipt ? "Received from" : "Bill to";
+    const party3Label = isExpense ? "Date" : isReceipt ? "Payment date" : "Issue date";
+    const totalLabel = isExpense ? "Total reimbursable" : isReceipt ? "Amount paid" : "Total due";
+    const payLabel = isExpense ? "Reimburse to" : "Payment details";
     body = (
       <>
         <div className="hero">
@@ -153,15 +158,15 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           {isReceipt && <div className="paidstamp">PAID</div>}
         </div>
         <div className="parties">
-          <div><div className="mono">{isReceipt ? "Received from" : "Bill to"}</div>
+          <div><div className="mono">{party1Label}</div>
             <Editable field="bill_to_name" tag="div" className="name" editable={editable} initial={data.bill_to_name || ""} />
             <Editable field="bill_to_lines" tag="div" className="sub" editable={editable} initial={data.bill_to_lines || ""} /></div>
           <div><div className="mono">From</div>
             <Editable field="from_name" tag="div" className="name" editable={editable} initial={data.from_name || ""} />
             <Editable field="from_lines" tag="div" className="sub" editable={editable} initial={data.from_lines || ""} /></div>
-          <div><div className="mono">{isReceipt ? "Payment date" : "Issue date"}</div>
+          <div><div className="mono">{party3Label}</div>
             <Editable field="issue_date" tag="div" className="val" editable={editable} initial={data.issue_date || ""} />
-            {!isReceipt && <><div className="mono">Due date</div><Editable field="due_date" tag="div" className="val" editable={editable} initial={data.due_date || ""} /></>}</div>
+            {!isReceipt && !isExpense && <><div className="mono">Due date</div><Editable field="due_date" tag="div" className="val" editable={editable} initial={data.due_date || ""} /></>}</div>
         </div>
         <div className="project">
           <div className="mono">{data.reference_label || "Project reference"}</div>
@@ -175,12 +180,16 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           </div>
           <div className="totcol">
             {sumsBlock}
-            <div className="total"><div className="mono">{isReceipt ? "Amount paid" : "Total due"}</div><div className="big">{money(totals.total, currency)}</div></div>
+            <div className="total"><div className="mono">{totalLabel}</div><div className="big">{money(totals.total, currency)}</div></div>
           </div>
         </div>
         <div className="pay">
-          <div><div className="mono">Payment details</div><Editable field="payment_details" tag="p" editable={editable} initial={data.payment_details || ""} /></div>
-          {isReceipt ? (
+          <div><div className="mono">{payLabel}</div><Editable field="payment_details" tag="p" editable={editable} initial={data.payment_details || ""} /></div>
+          {isExpense ? (
+            <div><div className="mono">Notes</div>
+              <Editable field="payment_terms" tag="p" editable={editable} initial={data.payment_terms || ""} />
+              <Editable field="note" tag="p" className="note" editable={editable} initial={data.note || ""} /></div>
+          ) : isReceipt ? (
             <div><div className="mono">Payment received</div>
               <Editable field="payment_method" tag="p" editable={editable} initial={data.payment_method || "Bank transfer"} />
               <Editable field="paid_date" tag="p" className="note" editable={editable} initial={data.paid_date || ""} /></div>

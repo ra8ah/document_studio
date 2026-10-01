@@ -77,9 +77,10 @@ See `REIMPORT.md` for the new-account procedure.
 - `packages` — saved reusable line items.
 - `counters` — per-type auto-increment for numbering.
 
-## 8. Document types (12) & conversions
-invoice, quotation, receipt (financial layout) · proposal, statement_of_work, service_agreement, nda, project_status, maintenance_plan, welcome_doc, thank_you_doc (content layout) · letterhead.
+## 8. Document types (13) & conversions
+invoice, quotation, receipt, expense_report (financial layout) · proposal, statement_of_work, service_agreement, nda, project_status, maintenance_plan, welcome_doc, thank_you_doc (content layout) · letterhead.
 Each: light + dark variant. One-click conversions: quotation→invoice, proposal→statement_of_work, invoice→receipt. Duplicate any. Mark-paid on invoice auto-creates a receipt.
+**Expense Report** (prefix `EXP`): financial layout reusing the Description/Qty/Rate/Amount table; relabelled to "Submitted to / From / Date", "Purpose", "Reimburse to" + "Notes", and a "Total reimbursable" block (no due date, no PAID stamp).
 
 ## 9. Key API endpoints (all under /api)
 - Auth: `POST /auth/login`, `GET /auth/me`, `POST /auth/logout`, `POST /auth/refresh`.

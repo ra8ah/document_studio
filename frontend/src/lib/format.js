@@ -1,6 +1,6 @@
 import {
   FileText, Receipt, FileSignature, ShieldCheck, ClipboardList, Wrench,
-  Sparkles, HeartHandshake, ScrollText, FileCheck2, Quote, Mail,
+  Sparkles, HeartHandshake, ScrollText, FileCheck2, Quote, Mail, Wallet,
 } from "lucide-react";
 
 export const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "CAD", "AUD", "SGD", "JPY", "CHF", "SAR", "ZAR", "NZD"];
@@ -30,6 +30,7 @@ export const DOC_TYPES = [
   { id: "welcome_doc", label: "Welcome Document", code: "10", layout: "content", icon: Sparkles, desc: "Onboarding, portal and questionnaire links." },
   { id: "thank_you_doc", label: "Thank-You Document", code: "11", layout: "content", icon: HeartHandshake, desc: "Handover note with testimonial link." },
   { id: "letterhead", label: "Letterhead", code: "12", layout: "letterhead", icon: Mail, desc: "Official correspondence template." },
+  { id: "expense_report", label: "Expense Report", code: "13", layout: "financial", icon: Wallet, desc: "Itemised business expenses with reimbursable total." },
 ];
 
 export const TYPE_MAP = Object.fromEntries(DOC_TYPES.map((t) => [t.id, t]));
