@@ -43,6 +43,24 @@ def create_refresh_token(user_id: str) -> str:
     return jwt.encode(payload, get_jwt_secret(), algorithm=JWT_ALGORITHM)
 
 
+PRINT_TOKEN_TTL_S = 60
+
+
+def create_print_token(doc_id: str) -> str:
+    """Read-only, ~60s, bound to one document; accepted ONLY by GET /api/print/{id}."""
+    payload = {"doc": doc_id, "type": "print",
+               "exp": datetime.now(timezone.utc) + timedelta(seconds=PRINT_TOKEN_TTL_S)}
+    return jwt.encode(payload, get_jwt_secret(), algorithm=JWT_ALGORITHM)
+
+
+def verify_print_token(token: str, doc_id: str) -> bool:
+    try:
+        p = jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
+    except jwt.InvalidTokenError:
+        return False
+    return p.get("type") == "print" and p.get("doc") == doc_id
+
+
 _SAMESITE_VALUES = {"lax", "strict", "none"}
 
 

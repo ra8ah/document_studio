@@ -50,10 +50,13 @@ export function buildPageCss({ size = "A4", theme = "light", mode = "paged" }) {
   const { paper, muted } = PAPER[theme === "dark" ? "dark" : "light"];
   const sizeKw = size === "Letter" ? "letter" : "A4";
   const m = PAGE_MARGINS;
-  const page = mode === "paged"
-    ? `@page {
+  const margin = `margin: ${m.top} ${m.right} ${m.bottom} ${m.left};`;
+  // "server": headless Chromium adds "Page X of Y" via its footer template, so no CSS margin box here
+  if (mode === "server") return `@page { size: ${sizeKw}; ${margin} background: ${paper}; }`;
+  if (mode === "frame") return `@page { size: ${sizeKw}; margin: 0; }`;
+  return `@page {
   size: ${sizeKw};
-  margin: ${m.top} ${m.right} ${m.bottom} ${m.left};
+  ${margin}
   background: ${paper};
   @bottom-center {
     content: "Page " counter(page) " of " counter(pages);
@@ -63,11 +66,6 @@ export function buildPageCss({ size = "A4", theme = "light", mode = "paged" }) {
     text-transform: uppercase;
     color: ${muted};
   }
-}`
-    : `@page { size: ${sizeKw}; margin: 0; }`;
-  return `${page}
-@media print {
-  html, body { background: ${paper} !important; }
 }`;
 }
 

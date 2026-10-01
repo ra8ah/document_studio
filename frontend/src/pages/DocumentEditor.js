@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api, { API } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import DocumentCanvas from "@/components/DocumentCanvas";
-import PrintButton from "@/components/PrintButton";
+import { DownloadMenu } from "@/components/DownloadMenu";
 import LoadError from "@/components/LoadError";
 import usePrintSetup from "@/hooks/usePrintSetup";
 import { CURRENCIES, STATUSES, STATUS_META, TYPE_MAP } from "@/lib/format";
@@ -20,7 +20,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  ArrowLeft, Save, Download, Share2, MoreVertical, Plus, Copy, RefreshCw, BadgeCheck, Trash2, Package, Sun, Moon, Loader2, Eraser,
+  ArrowLeft, Save, Share2, MoreVertical, Plus, Copy, RefreshCw, BadgeCheck, Trash2, Package, Sun, Moon, Loader2, Eraser,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -414,14 +414,7 @@ export default function DocumentEditor() {
               onClick={() => { setResetMode(null); setResetOpen(true); }} data-testid="reset-button"><Eraser size={14} /> Clear &amp; start fresh</Button>
           )}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="rounded-full gap-1" data-testid="export-menu"><Download size={14} /> Export</Button></DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={exportDocx} data-testid="export-docx">Word · DOCX</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <PrintButton size={pageSize} />
+          <DownloadMenu size={pageSize} pdfPath={`/documents/${id}/pdf`} beforeDownload={ensureSaved} onDocx={exportDocx} />
 
           <Button variant="outline" size="sm" className="rounded-full gap-1" onClick={share} data-testid="share-button"><Share2 size={14} /> Share</Button>
 

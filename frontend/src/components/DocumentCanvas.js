@@ -56,7 +56,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
     setTotals({ sub, disc, tax: tx, total: base + tx });
   };
 
-  useEffect(() => { recalc(); /* eslint-disable-next-line */ }, [rows, currency, discount, tax]);
+  useEffect(() => { recalc(); }, [rows, currency, discount, tax]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // structural edits (row / section added or removed) count as changes; skip the initial mount
   const prevStruct = useRef({ rows, sections }); // identity check is StrictMode-safe (effects run twice on mount)

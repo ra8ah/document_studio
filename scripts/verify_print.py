@@ -355,12 +355,14 @@ def main():
                           imgs: imgs.every(i => i.complete && i.naturalWidth > 0), nimgs: imgs.length,
                           mode: document.documentElement.dataset.printMode }; }; }""")
                     t0 = time.time()
-                    page.click("[data-testid=print-button]")
-                    page.click("[data-testid=print-confirm]")
+                    trig = page.locator("[data-testid=download-menu-trigger]")
+                    (trig if trig.is_visible() else page.locator("[data-testid=download-menu-mobile]")).click()
+                    page.click("[data-testid=print-browser]")
                     page.wait_for_function("window.__printCall !== null", timeout=15000)
                     call = page.evaluate("window.__printCall")
                     pdf = OUT / f"{name}{'-frame' if mode == 'frame' else ''}.pdf"
-                    page.pdf(path=str(pdf), print_background=True, prefer_css_page_size=True)
+                    # background graphics OFF: proves the user never has to tick that checkbox
+                    page.pdf(path=str(pdf), print_background=False, prefer_css_page_size=True)
                     real_mode = "frame" if mode == "frame" else call["mode"]
                     r = analyse(pdf, {**spec, "mode": real_mode})
                     r["name"] = pdf.stem

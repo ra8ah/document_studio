@@ -80,6 +80,8 @@ Its health check is **`GET /api/health`** (200 = API up and MongoDB reachable).
 | `JWT_SECRET` | yes | 64+ random chars (`python -c "import secrets;print(secrets.token_urlsafe(64))"`) | changing it logs everyone out |
 | `ADMIN_EMAIL` | yes | your login email | admin is seeded/updated at startup |
 | `ADMIN_PASSWORD` | yes | a strong password | see PRE_LAUNCH_CHECKLIST.md |
+| `FRONTEND_URL` | yes | `https://<app>.vercel.app` | public frontend URL; server PDFs are rendered from its `/print` route. Startup **fails** if missing |
+| `PDF_MAX_CONCURRENT` / `PDF_RENDER_TIMEOUT_S` | no | `2` / `30` | Chromium render limits (memory) |
 | `CORS_ORIGINS` | yes | `https://<app>.vercel.app,https://studio.example.com` | comma-separated, exact origins; startup **fails** if missing or `*` |
 | `COOKIE_SAMESITE` | no | `lax` (default) | `lax` with the Vercel proxy; `none` only if the browser calls the backend cross-site directly; `strict` also works |
 | `MONGO_MAX_POOL_SIZE` | no | `20` | Atlas M0 allows 500 connections in total |

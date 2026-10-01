@@ -12,6 +12,8 @@ import csv
 import json
 import secrets
 import logging
+import unicodedata
+from urllib.parse import quote
 from datetime import datetime, timezone, timedelta, date
 
 from fastapi import FastAPI, APIRouter, Request, Response, HTTPException, Depends, Query
@@ -28,6 +30,7 @@ from models import BusinessProfile, ClientIn, DocumentIn, DocumentUpdate, Packag
 from renderer import compute_totals, TYPE_META
 from docdata import build_default_data, default_line_items
 import docx_export
+import pdf_export
 
 mongo_url = os.environ["MONGO_URL"]
 # Works for local MongoDB and Atlas (mongodb+srv://). Pool sized for small hosts / Atlas M0 (500 conn cap).
@@ -56,6 +59,17 @@ def _cors_origins() -> list:
 
 CORS_ORIGINS = _cors_origins()
 auth.cookie_samesite()  # validate COOKIE_SAMESITE at startup
+
+
+def _frontend_url() -> str:
+    v = (os.environ.get("FRONTEND_URL") or "").strip().rstrip("/")
+    if not re.fullmatch(r"https?://[^\s/#?]+(/[^\s#?]*)?", v):
+        raise RuntimeError("FRONTEND_URL is required: the public frontend URL (e.g. https://your-app.vercel.app). "
+                           "Server PDFs are rendered from its /print route.")
+    return v
+
+
+FRONTEND_URL = _frontend_url()
 
 app = FastAPI()
 api = APIRouter(prefix="/api")
@@ -575,6 +589,86 @@ async def mark_paid(did: str, user=Depends(current_user)):
     return {"ok": True, "receipt": receipt}
 
 
+# ---------------- server PDF (headless Chromium renders the frontend /print route) ----------------
+_FN_ILLEGAL = re.compile(r'[\\/:*?"<>|\x00-\x1f\x7f]')
+
+
+def pdf_filename(d: dict) -> tuple:
+    """('INV-0012 - Client.pdf' ASCII fallback, same in UTF-8). Empty client -> 'INV-0012.pdf'."""
+    clean = lambda v: re.sub(r"\s+", " ", _FN_ILLEGAL.sub(" ", v or "")).strip(" .")  # noqa: E731
+    number = clean(d.get("number")) or "document"
+    client_name = d.get("client_name") or (d.get("data") or {}).get("bill_to_name") or ""
+    if re.fullmatch(r"\[.*\]", client_name.strip()):  # template placeholder like "[Client name]"
+        client_name = ""
+    client_part = clean(client_name)[:60].strip()
+    utf8 = f"{number} - {client_part}.pdf" if client_part else f"{number}.pdf"
+    ascii_client = clean(unicodedata.normalize("NFKD", client_part).encode("ascii", "ignore").decode())
+    ascii_name = f"{number} - {ascii_client}.pdf" if ascii_client else f"{number}.pdf"
+    return ascii_name, utf8
+
+
+async def _pdf_response(d: dict, size: str):
+    size = "Letter" if size == "Letter" else "A4"
+    did = str(d["_id"])
+    tok = auth.create_print_token(did)
+    # token travels in the #fragment: never sent to (or logged by) the frontend host
+    url = f"{FRONTEND_URL}/print/{did}?size={size}#t={tok}"
+    try:
+        pdf = await pdf_export.render_pdf(url, size, d.get("theme", "light"))
+    except pdf_export.PdfBusy:
+        raise HTTPException(503, "PDF service is busy, please try again in a moment")
+    except pdf_export.PdfTimeout:
+        logger.error(f"pdf: render timed out for document {did}")
+        raise HTTPException(504, "PDF rendering timed out")
+    except Exception as e:
+        logger.error(f"pdf: render failed for document {did}: {type(e).__name__}")
+        raise HTTPException(502, "PDF rendering failed")
+    ascii_name, utf8 = pdf_filename(d)
+    return Response(pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(utf8, safe='')}",
+        "Cache-Control": "no-store",
+    })
+
+
+@api.get("/documents/{did}/pdf")
+async def document_pdf(did: str, size: str = "A4", user=Depends(current_user)):
+    d = await db.documents.find_one({"_id": oid(did)})
+    if not d:
+        raise HTTPException(404, "Not found")
+    return await _pdf_response(d, size)
+
+
+@api.get("/share/{token}/pdf")
+async def share_pdf(token: str, size: str = "A4"):
+    if not re.fullmatch(r"[A-Za-z0-9_-]{8,64}", token):
+        raise HTTPException(404, "Not found")
+    d = await db.documents.find_one({"share_token": token})
+    if not d:
+        raise HTTPException(404, "Not found")
+    return await _pdf_response(d, size)
+
+
+@api.get("/print/{did}")
+async def print_data(did: str, request: Request):
+    """Data for the frontend /print route. Accepts only a print token (X-Print-Token) bound to this id."""
+    tok = request.headers.get("X-Print-Token", "")
+    if not tok or not auth.verify_print_token(tok, did):
+        raise HTTPException(401, "Invalid or expired print token")
+    d = await db.documents.find_one({"_id": oid(did)})
+    if not d:
+        raise HTTPException(404, "Not found")
+    s = ser(d)
+    s["totals"] = compute_totals(d)
+    s.pop("share_token", None)
+    return JSONResponse(s, headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer",
+                                    "X-Robots-Tag": "noindex, nofollow"})
+
+
+@api.get("/health/pdf")
+async def health_pdf():
+    return {"status": "ok", **pdf_export.status()}
+
+
 # ---------------- exports ----------------
 @api.get("/documents/{did}/docx")
 async def document_docx(did: str, user=Depends(current_user)):
@@ -776,7 +870,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_origins=CORS_ORIGINS,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "X-Print-Token"],
+    expose_headers=["Content-Disposition"],
 )
 
 
@@ -829,4 +924,5 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
+    await pdf_export.shutdown()
     client.close()

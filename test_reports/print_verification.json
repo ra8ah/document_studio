@@ -1,6 +1,6 @@
 {
   "app": "https://65bc553f-2a8e-4219-a617-084d9b4591e8.preview.emergentagent.com",
-  "generated": "2026-10-01 10:22:24",
+  "generated": "2026-10-01 11:49:07",
   "all_ok": true,
   "results": [
     {
@@ -16,7 +16,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "479 chars extracted"
+          "detail": "481 chars extracted"
         },
         "text:Invoice": {
           "ok": true
@@ -63,7 +63,7 @@
         },
         "no_orphaned_footer_page": {
           "ok": true,
-          "detail": "446 chars of content on last page"
+          "detail": "448 chars of content on last page"
         },
         "page_numbers": {
           "ok": true,
@@ -97,7 +97,7 @@
               "Poppins 700"
             ],
             "images": 0,
-            "ms_to_print": 695
+            "ms_to_print": 770
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -130,7 +130,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "1172 chars extracted"
+          "detail": "1174 chars extracted"
         },
         "text:Invoice": {
           "ok": true
@@ -212,7 +212,7 @@
               "Poppins 700"
             ],
             "images": 0,
-            "ms_to_print": 711
+            "ms_to_print": 789
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -245,7 +245,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "3357 chars extracted"
+          "detail": "3359 chars extracted"
         },
         "text:Invoice": {
           "ok": true
@@ -329,7 +329,7 @@
               "Poppins 700"
             ],
             "images": 0,
-            "ms_to_print": 891
+            "ms_to_print": 901
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -362,7 +362,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "3325 chars extracted"
+          "detail": "3327 chars extracted"
         },
         "text:Invoice": {
           "ok": true
@@ -437,7 +437,7 @@
               "Poppins 700"
             ],
             "images": 0,
-            "ms_to_print": 1164
+            "ms_to_print": 833
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -466,7 +466,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "1172 chars extracted"
+          "detail": "1174 chars extracted"
         },
         "text:Invoice": {
           "ok": true
@@ -551,7 +551,7 @@
               "Poppins 700"
             ],
             "images": 0,
-            "ms_to_print": 717
+            "ms_to_print": 787
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -584,7 +584,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "1632 chars extracted"
+          "detail": "1633 chars extracted"
         },
         "text:Invoice": {
           "ok": true
@@ -666,7 +666,7 @@
               "Poppins 700"
             ],
             "images": 1,
-            "ms_to_print": 664
+            "ms_to_print": 722
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -704,7 +704,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "1616 chars extracted"
+          "detail": "1617 chars extracted"
         },
         "text:Invoice": {
           "ok": true
@@ -779,7 +779,7 @@
               "Poppins 700"
             ],
             "images": 1,
-            "ms_to_print": 601
+            "ms_to_print": 698
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -808,7 +808,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "567 chars extracted"
+          "detail": "568 chars extracted"
         },
         "text:Invoice": {
           "ok": true
@@ -870,7 +870,7 @@
         },
         "no_orphaned_footer_page": {
           "ok": true,
-          "detail": "534 chars of content on last page"
+          "detail": "535 chars of content on last page"
         },
         "page_numbers": {
           "ok": true,
@@ -904,7 +904,7 @@
               "Poppins 700"
             ],
             "images": 1,
-            "ms_to_print": 680
+            "ms_to_print": 706
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -937,7 +937,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "9139 chars extracted"
+          "detail": "9141 chars extracted"
         },
         "text:Proposal": {
           "ok": true
@@ -1025,7 +1025,7 @@
               "Poppins 700"
             ],
             "images": 0,
-            "ms_to_print": 886
+            "ms_to_print": 861
           }
         },
         "fonts_self_hosted_no_external_requests": {
@@ -1058,7 +1058,7 @@
         },
         "real_text": {
           "ok": true,
-          "detail": "9099 chars extracted"
+          "detail": "9101 chars extracted"
         },
         "text:Proposal": {
           "ok": true
@@ -1136,7 +1136,7 @@
               "Poppins 700"
             ],
             "images": 0,
-            "ms_to_print": 874
+            "ms_to_print": 864
           }
         },
         "fonts_self_hosted_no_external_requests": {

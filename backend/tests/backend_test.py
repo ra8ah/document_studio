@@ -119,9 +119,9 @@ class TestDocuments:
         assert len(d["line_items"]) == 1
         assert d["line_items"][0]["description"] == "Design"
 
-    def test_server_pdf_removed(self, client, doc_id):
-        # PDF is produced client-side (browser print); the server route is gone
-        assert client.get(f"{BASE_URL}/api/documents/{doc_id}/pdf").status_code == 404
+    def test_server_pdf(self, client, doc_id):
+        r = client.get(f"{BASE_URL}/api/documents/{doc_id}/pdf", params={"size": "A4"}, timeout=60)
+        assert r.status_code == 200 and r.content[:4] == b"%PDF"
 
     def test_docx(self, client, doc_id):
         r = client.get(f"{BASE_URL}/api/documents/{doc_id}/docx")

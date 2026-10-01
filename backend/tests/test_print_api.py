@@ -44,11 +44,13 @@ def ctx():
         db.counters.insert_many(counters)
 
 
-def test_server_pdf_routes_removed(ctx):
+def test_server_pdf_routes(ctx):
     s, d = ctx
-    assert s.get(f"{BASE}/api/documents/{d['id']}/pdf").status_code == 404
+    r = s.get(f"{BASE}/api/documents/{d['id']}/pdf", timeout=60)
+    assert r.status_code == 200 and r.content[:4] == b"%PDF"
     tok = s.post(f"{BASE}/api/documents/{d['id']}/share").json()["token"]
-    assert s.get(f"{BASE}/api/share/{tok}/pdf").status_code == 404
+    r = s.get(f"{BASE}/api/share/{tok}/pdf", params={"size": "Letter"}, timeout=60)
+    assert r.status_code == 200 and r.content[:4] == b"%PDF"
     assert s.get(f"{BASE}/api/share/{tok}").status_code == 200
 
 

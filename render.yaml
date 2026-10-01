@@ -22,6 +22,12 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: PDF_MAX_CONCURRENT
+        value: "2"
+      - key: PDF_RENDER_TIMEOUT_S
+        value: "30"
       - key: COOKIE_SAMESITE
         value: lax
       - key: MONGO_MAX_POOL_SIZE

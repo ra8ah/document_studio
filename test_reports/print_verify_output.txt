@@ -1,0 +1,149 @@
+
+== Browser print (Chromium, background graphics OFF, CSS @page) ==
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  print[paged] light A4 1 items: all 8 edge points on 1 page(s) == paper #F2ECE0  []
+PASS  print[paged] light A4 1 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[paged] light A4 1 items: real text extractable  
+PASS  print[paged] light A4 1 items: page count 1 1..1  
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p2: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  print[paged] light A4 15 items: all 8 edge points on 2 page(s) == paper #F2ECE0  []
+PASS  print[paged] light A4 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[paged] light A4 15 items: real text extractable  
+PASS  print[paged] light A4 15 items: page count 2 2..3  
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p2: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  print[paged] light Letter 15 items: all 8 edge points on 2 page(s) == paper #F2ECE0  []
+PASS  print[paged] light Letter 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[paged] light Letter 15 items: real text extractable  
+PASS  print[paged] light Letter 15 items: page count 2 2..3  
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p2: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  print[frame] light A4 15 items: all 8 edge points on 2 page(s) == paper #F2ECE0  []
+PASS  print[frame] light A4 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[frame] light A4 15 items: real text extractable  
+PASS  print[frame] light A4 15 items: page count 2 2..3  
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p2: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p3: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p4: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  print[paged] light A4 60 items: all 8 edge points on 4 page(s) == paper #F2ECE0  []
+PASS  print[paged] light A4 60 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[paged] light A4 60 items: real text extractable  
+PASS  print[paged] light A4 60 items: page count 4 3..6  
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  print[paged] dark A4 1 items: all 8 edge points on 1 page(s) == paper #1C1815  []
+PASS  print[paged] dark A4 1 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[paged] dark A4 1 items: real text extractable  
+PASS  print[paged] dark A4 1 items: page count 1 1..1  
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p2: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  print[paged] dark A4 15 items: all 8 edge points on 2 page(s) == paper #1C1815  []
+PASS  print[paged] dark A4 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[paged] dark A4 15 items: real text extractable  
+PASS  print[paged] dark A4 15 items: page count 2 2..3  
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p2: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  print[paged] dark Letter 15 items: all 8 edge points on 2 page(s) == paper #1C1815  []
+PASS  print[paged] dark Letter 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[paged] dark Letter 15 items: real text extractable  
+PASS  print[paged] dark Letter 15 items: page count 2 2..3  
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p2: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  print[frame] dark A4 15 items: all 8 edge points on 2 page(s) == paper #1C1815  []
+PASS  print[frame] dark A4 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[frame] dark A4 15 items: real text extractable  
+PASS  print[frame] dark A4 15 items: page count 2 2..3  
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p2: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p3: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p4: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  print[paged] dark A4 60 items: all 8 edge points on 4 page(s) == paper #1C1815  []
+PASS  print[paged] dark A4 60 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, Poppins-Medium, Poppins-Regular)  
+PASS  print[paged] dark A4 60 items: real text extractable  
+PASS  print[paged] dark A4 60 items: page count 4 3..6  
+
+== Server PDF (GET /api/documents/{id}/pdf) ==
+PASS  server light A4 1: 200 application/pdf  200 
+PASS  server light A4 1: filename  attachment; filename="INV-0040 - TEST_PRINT_CLIENT.pdf"; filename*=UTF-8''INV-0040%20-%20TEST_PRINT_CLIENT.pdf
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  server light A4 1 items: all 8 edge points on 1 page(s) == paper #F2ECE0  []
+PASS  server light A4 1 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  server light A4 1 items: real text extractable  
+PASS  server light A4 1 items: page count 1 1..1  
+PASS  server light A4 1 items: 'Page X of Y' footer on every page  found=[1] pages=1
+PASS  server light A4 15: 200 application/pdf  200 
+PASS  server light A4 15: filename  attachment; filename="INV-0041 - TEST_PRINT_CLIENT.pdf"; filename*=UTF-8''INV-0041%20-%20TEST_PRINT_CLIENT.pdf
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p2: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  server light A4 15 items: all 8 edge points on 2 page(s) == paper #F2ECE0  []
+PASS  server light A4 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  server light A4 15 items: real text extractable  
+PASS  server light A4 15 items: page count 2 2..3  
+PASS  server light A4 15 items: 'Page X of Y' footer on every page  found=[1, 2] pages=2
+PASS  server light Letter 15: 200 application/pdf  200 
+PASS  server light Letter 15: filename  attachment; filename="INV-0041 - TEST_PRINT_CLIENT.pdf"; filename*=UTF-8''INV-0041%20-%20TEST_PRINT_CLIENT.pdf
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p2: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  server light Letter 15 items: all 8 edge points on 2 page(s) == paper #F2ECE0  []
+PASS  server light Letter 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  server light Letter 15 items: real text extractable  
+PASS  server light Letter 15 items: page count 2 2..3  
+PASS  server light Letter 15 items: 'Page X of Y' footer on every page  found=[1, 2] pages=2
+PASS  server light A4 60: 200 application/pdf  200 
+PASS  server light A4 60: filename  attachment; filename="INV-0042 - TEST_PRINT_CLIENT.pdf"; filename*=UTF-8''INV-0042%20-%20TEST_PRINT_CLIENT.pdf
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p2: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p3: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+      p4: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  server light A4 60 items: all 8 edge points on 4 page(s) == paper #F2ECE0  []
+PASS  server light A4 60 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  server light A4 60 items: real text extractable  
+PASS  server light A4 60 items: page count 4 3..6  
+PASS  server light A4 60 items: 'Page X of Y' footer on every page  found=[1, 2, 3, 4] pages=4
+PASS  server dark A4 1: 200 application/pdf  200 
+PASS  server dark A4 1: filename  attachment; filename="INV-0043 - TEST_PRINT_CLIENT.pdf"; filename*=UTF-8''INV-0043%20-%20TEST_PRINT_CLIENT.pdf
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  server dark A4 1 items: all 8 edge points on 1 page(s) == paper #1C1815  []
+PASS  server dark A4 1 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  server dark A4 1 items: real text extractable  
+PASS  server dark A4 1 items: page count 1 1..1  
+PASS  server dark A4 1 items: 'Page X of Y' footer on every page  found=[1] pages=1
+PASS  server dark A4 15: 200 application/pdf  200 
+PASS  server dark A4 15: filename  attachment; filename="INV-0044 - TEST_PRINT_CLIENT.pdf"; filename*=UTF-8''INV-0044%20-%20TEST_PRINT_CLIENT.pdf
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p2: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  server dark A4 15 items: all 8 edge points on 2 page(s) == paper #1C1815  []
+PASS  server dark A4 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  server dark A4 15 items: real text extractable  
+PASS  server dark A4 15 items: page count 2 2..3  
+PASS  server dark A4 15 items: 'Page X of Y' footer on every page  found=[1, 2] pages=2
+PASS  server dark Letter 15: 200 application/pdf  200 
+PASS  server dark Letter 15: filename  attachment; filename="INV-0044 - TEST_PRINT_CLIENT.pdf"; filename*=UTF-8''INV-0044%20-%20TEST_PRINT_CLIENT.pdf
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p2: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  server dark Letter 15 items: all 8 edge points on 2 page(s) == paper #1C1815  []
+PASS  server dark Letter 15 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  server dark Letter 15 items: real text extractable  
+PASS  server dark Letter 15 items: page count 2 2..3  
+PASS  server dark Letter 15 items: 'Page X of Y' footer on every page  found=[1, 2] pages=2
+PASS  server dark A4 60: 200 application/pdf  200 
+PASS  server dark A4 60: filename  attachment; filename="INV-0045 - TEST_PRINT_CLIENT.pdf"; filename*=UTF-8''INV-0045%20-%20TEST_PRINT_CLIENT.pdf
+      p1: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p2: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p3: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+      p4: TL=#1C1815 TR=#1C1815 BL=#1C1815 BR=#1C1815 T=#1C1815 B=#1C1815 L=#1C1815 R=#1C1815
+PASS  server dark A4 60 items: all 8 edge points on 4 page(s) == paper #1C1815  []
+PASS  server dark A4 60 items: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  server dark A4 60 items: real text extractable  
+PASS  server dark A4 60 items: page count 4 3..6  
+PASS  server dark A4 60 items: 'Page X of Y' footer on every page  found=[1, 2, 3, 4] pages=4
+PASS  share PDF: 200 application/pdf (no auth)  200
+      p1: TL=#F2ECE0 TR=#F2ECE0 BL=#F2ECE0 BR=#F2ECE0 T=#F2ECE0 B=#F2ECE0 L=#F2ECE0 R=#F2ECE0
+PASS  share light A4: all 8 edge points on 1 page(s) == paper #F2ECE0  []
+PASS  share light A4: fonts embedded (IBMPlexMono-Regular, IBMPlexMono-SemiBold, LiberationMono, Poppins-Medium, Poppins-Regular)  
+PASS  share light A4: real text extractable  
+PASS  share light A4: page count 1 1..1  
+PASS  share light A4: 'Page X of Y' footer on every page  found=[1] pages=1
+
+102/102 passed

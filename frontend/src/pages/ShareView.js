@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { API } from "@/lib/api";
 import axios from "axios";
 import DocumentCanvas from "@/components/DocumentCanvas";
-import PrintButton from "@/components/PrintButton";
+import { DownloadMenu } from "@/components/DownloadMenu";
 import usePrintSetup from "@/hooks/usePrintSetup";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -41,7 +41,7 @@ export default function ShareView() {
               <SelectItem value="Letter">US Letter</SelectItem>
             </SelectContent>
           </Select>
-          <PrintButton size={pageSize} variant="default" />
+          <DownloadMenu size={pageSize} pdfPath={`/share/${token}/pdf`} />
         </div>
       </header>
       <div className="py-8 px-2 overflow-x-auto">

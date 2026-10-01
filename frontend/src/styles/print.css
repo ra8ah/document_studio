@@ -10,6 +10,9 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  /* full-sheet paper colour (incl. the margin area): set by usePrintSetup, removed when leaving the page */
+  html.doc-print-light, html.doc-print-light body { background: #F2ECE0 !important; }
+  html.doc-print-dark, html.doc-print-dark body { background: #1C1815 !important; }
 
   /* 1 — hide everything that is not the document, its ancestors or its content */
   html[data-print-mode] body *:not([data-print-target]):not([data-print-target] *):not(:has([data-print-target])) {
@@ -91,9 +94,11 @@
   [data-print-target] .body,
   [data-print-target] .sub { orphans: 3; widows: 3; }
 
-  /* 5a — "paged" mode (Chromium): frame spacers unused */
+  /* 5a — "paged" / "server" mode (Chromium): frame spacers unused */
   html[data-print-mode="paged"] [data-print-target] .print-frame > thead,
-  html[data-print-mode="paged"] [data-print-target] .print-frame > tfoot { display: none !important; }
+  html[data-print-mode="paged"] [data-print-target] .print-frame > tfoot,
+  html[data-print-mode="server"] [data-print-target] .print-frame > thead,
+  html[data-print-mode="server"] [data-print-target] .print-frame > tfoot { display: none !important; }
 
   /* 5b — "frame" mode (Firefox / Safari): @page margin 0 + repeating spacer rows */
   html[data-print-mode="frame"] [data-print-target] .print-frame {

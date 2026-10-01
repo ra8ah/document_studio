@@ -12,6 +12,7 @@ import DocumentsList from "@/pages/DocumentsList";
 import NewDocument from "@/pages/NewDocument";
 import DocumentEditor from "@/pages/DocumentEditor";
 import ShareView from "@/pages/ShareView";
+import PrintView from "@/pages/PrintView";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/share/:token" element={<ShareView />} />
+            <Route path="/print/:id" element={<PrintView />} />
             <Route element={<Protected><Layout /></Protected>}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/clients" element={<Clients />} />
