@@ -1,0 +1,1156 @@
+{
+  "app": "https://65bc553f-2a8e-4219-a617-084d9b4591e8.preview.emergentagent.com",
+  "generated": "2026-10-01 10:22:24",
+  "all_ok": true,
+  "results": [
+    {
+      "file": "/tmp/print-verify/invoice-1-item.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "1 (expected 1-1)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "479 chars extracted"
+        },
+        "text:Invoice": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 1 item page(s)"
+        },
+        "together:BILLING NOTE+SUBTOTAL+TOTAL DUE+PAYMENT DETAILS+PAYMENT TERMS": {
+          "ok": true,
+          "detail": [
+            1
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "446 chars of content on last page"
+        },
+        "page_numbers": {
+          "ok": true,
+          "detail": [
+            true
+          ]
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.8mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "light paper on every edge of 1 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 0,
+            "ms_to_print": 695
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        },
+        "chromium_auto_selects_paged_mode": {
+          "ok": true,
+          "detail": "paged"
+        }
+      },
+      "ok": true,
+      "pages": 1,
+      "name": "invoice-1-item",
+      "print_mode": "paged"
+    },
+    {
+      "file": "/tmp/print-verify/invoice-15-items.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "2 (expected 1-2)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "1172 chars extracted"
+        },
+        "text:Invoice": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 2 item page(s)"
+        },
+        "together:BILLING NOTE+SUBTOTAL+TOTAL DUE+PAYMENT DETAILS+PAYMENT TERMS": {
+          "ok": true,
+          "detail": [
+            2
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "356 chars of content on last page"
+        },
+        "page_numbers": {
+          "ok": true,
+          "detail": [
+            true,
+            true
+          ]
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.8mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "light paper on every edge of 2 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 0,
+            "ms_to_print": 711
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        },
+        "chromium_auto_selects_paged_mode": {
+          "ok": true,
+          "detail": "paged"
+        }
+      },
+      "ok": true,
+      "pages": 2,
+      "name": "invoice-15-items",
+      "print_mode": "paged"
+    },
+    {
+      "file": "/tmp/print-verify/invoice-60-items.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "4 (expected 3-5)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "3357 chars extracted"
+        },
+        "text:Invoice": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 4 item page(s)"
+        },
+        "together:BILLING NOTE+SUBTOTAL+TOTAL DUE+PAYMENT DETAILS+PAYMENT TERMS": {
+          "ok": true,
+          "detail": [
+            4
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "595 chars of content on last page"
+        },
+        "page_numbers": {
+          "ok": true,
+          "detail": [
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.8mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "light paper on every edge of 4 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 0,
+            "ms_to_print": 891
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        },
+        "chromium_auto_selects_paged_mode": {
+          "ok": true,
+          "detail": "paged"
+        }
+      },
+      "ok": true,
+      "pages": 4,
+      "name": "invoice-60-items",
+      "print_mode": "paged"
+    },
+    {
+      "file": "/tmp/print-verify/invoice-60-items-frame.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "4 (expected 3-5)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "3325 chars extracted"
+        },
+        "text:Invoice": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 4 item page(s)"
+        },
+        "together:BILLING NOTE+SUBTOTAL+TOTAL DUE+PAYMENT DETAILS+PAYMENT TERMS": {
+          "ok": true,
+          "detail": [
+            4
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "595 chars of content on last page"
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.9mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "light paper on every edge of 4 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 0,
+            "ms_to_print": 1164
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        }
+      },
+      "ok": true,
+      "pages": 4,
+      "name": "invoice-60-items-frame",
+      "print_mode": "frame"
+    },
+    {
+      "file": "/tmp/print-verify/invoice-letter-usd.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "612.0x792.0pt (want Letter)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "2 (expected 1-2)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "1172 chars extracted"
+        },
+        "text:Invoice": {
+          "ok": true
+        },
+        "text:$": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 2 item page(s)"
+        },
+        "together:BILLING NOTE+SUBTOTAL+TOTAL DUE+PAYMENT DETAILS+PAYMENT TERMS": {
+          "ok": true,
+          "detail": [
+            2
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "403 chars of content on last page"
+        },
+        "page_numbers": {
+          "ok": true,
+          "detail": [
+            true,
+            true
+          ]
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 199.9mm of 215.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "light paper on every edge of 2 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 0,
+            "ms_to_print": 717
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        },
+        "chromium_auto_selects_paged_mode": {
+          "ok": true,
+          "detail": "paged"
+        }
+      },
+      "ok": true,
+      "pages": 2,
+      "name": "invoice-letter-usd",
+      "print_mode": "paged"
+    },
+    {
+      "file": "/tmp/print-verify/invoice-dark-share-narrow.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "2 (expected 2-3)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "1632 chars extracted"
+        },
+        "text:Invoice": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 2 item page(s)"
+        },
+        "together:BILLING NOTE+SUBTOTAL+TOTAL DUE+PAYMENT DETAILS+PAYMENT TERMS": {
+          "ok": true,
+          "detail": [
+            2
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "826 chars of content on last page"
+        },
+        "page_numbers": {
+          "ok": true,
+          "detail": [
+            true,
+            true
+          ]
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.8mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "dark paper on every edge of 2 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 1,
+            "ms_to_print": 664
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        },
+        "chromium_auto_selects_paged_mode": {
+          "ok": true,
+          "detail": "paged"
+        },
+        "dark_without_background_graphics_option": {
+          "ok": true,
+          "informational": true,
+          "detail": "full bleed"
+        }
+      },
+      "ok": true,
+      "pages": 2,
+      "name": "invoice-dark-share-narrow",
+      "print_mode": "paged"
+    },
+    {
+      "file": "/tmp/print-verify/invoice-dark-share-narrow-frame.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "2 (expected 2-3)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "1616 chars extracted"
+        },
+        "text:Invoice": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 2 item page(s)"
+        },
+        "together:BILLING NOTE+SUBTOTAL+TOTAL DUE+PAYMENT DETAILS+PAYMENT TERMS": {
+          "ok": true,
+          "detail": [
+            2
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "826 chars of content on last page"
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.9mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "dark paper on every edge of 2 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 1,
+            "ms_to_print": 601
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        }
+      },
+      "ok": true,
+      "pages": 2,
+      "name": "invoice-dark-share-narrow-frame",
+      "print_mode": "frame"
+    },
+    {
+      "file": "/tmp/print-verify/invoice-inr-grouping.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "1 (expected 1-1)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "567 chars extracted"
+        },
+        "text:Invoice": {
+          "ok": true
+        },
+        "text:₹1,23,45,678.90": {
+          "ok": true
+        },
+        "text:₹2,50,000.00": {
+          "ok": true
+        },
+        "text:GST": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": [
+            {
+              "page": 1,
+              "w": 1200,
+              "h": 300
+            }
+          ]
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 1 item page(s)"
+        },
+        "together:BILLING NOTE+SUBTOTAL+TOTAL DUE+PAYMENT DETAILS+PAYMENT TERMS": {
+          "ok": true,
+          "detail": [
+            1
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "534 chars of content on last page"
+        },
+        "page_numbers": {
+          "ok": true,
+          "detail": [
+            true
+          ]
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.8mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "light paper on every edge of 1 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 1,
+            "ms_to_print": 680
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        },
+        "chromium_auto_selects_paged_mode": {
+          "ok": true,
+          "detail": "paged"
+        }
+      },
+      "ok": true,
+      "pages": 1,
+      "name": "invoice-inr-grouping",
+      "print_mode": "paged"
+    },
+    {
+      "file": "/tmp/print-verify/proposal-multipage.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "5 (expected 3-6)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "9139 chars extracted"
+        },
+        "text:Proposal": {
+          "ok": true
+        },
+        "text:Section heading 10": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 1 item page(s)"
+        },
+        "together:Service Provider — signature+Client — signature": {
+          "ok": true,
+          "detail": [
+            5
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "51 chars of content on last page"
+        },
+        "page_numbers": {
+          "ok": true,
+          "detail": [
+            true,
+            true,
+            true,
+            true,
+            true
+          ]
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.6mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "light paper on every edge of 5 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 0,
+            "ms_to_print": 886
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        },
+        "chromium_auto_selects_paged_mode": {
+          "ok": true,
+          "detail": "paged"
+        }
+      },
+      "ok": true,
+      "pages": 5,
+      "name": "proposal-multipage",
+      "print_mode": "paged"
+    },
+    {
+      "file": "/tmp/print-verify/proposal-multipage-frame.pdf",
+      "checks": {
+        "page_size": {
+          "ok": true,
+          "detail": "595.0x841.9pt (want A4)"
+        },
+        "page_count": {
+          "ok": true,
+          "detail": "5 (expected 3-6)"
+        },
+        "real_text": {
+          "ok": true,
+          "detail": "9099 chars extracted"
+        },
+        "text:Proposal": {
+          "ok": true
+        },
+        "text:Section heading 10": {
+          "ok": true
+        },
+        "fonts_embedded": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "fonts_only_brand": {
+          "ok": true,
+          "detail": [
+            "IBMPlexMono-Regular",
+            "IBMPlexMono-SemiBold",
+            "Poppins-Medium",
+            "Poppins-Regular"
+          ]
+        },
+        "vector_no_raster_pages": {
+          "ok": true,
+          "detail": []
+        },
+        "every_row_once": {
+          "ok": true,
+          "detail": "all present"
+        },
+        "rows_not_split": {
+          "ok": true,
+          "detail": "none split"
+        },
+        "header_repeats_on_item_pages": {
+          "ok": true,
+          "detail": "header on all 1 item page(s)"
+        },
+        "together:Service Provider — signature+Client — signature": {
+          "ok": true,
+          "detail": [
+            5
+          ]
+        },
+        "no_orphaned_footer_page": {
+          "ok": true,
+          "detail": "51 chars of content on last page"
+        },
+        "nothing_clipped_or_outside_margins": {
+          "ok": true,
+          "detail": "all words inside 14/16/16/16mm box"
+        },
+        "full_width_layout": {
+          "ok": true,
+          "detail": "rightmost glyph at 193.7mm of 209.9mm"
+        },
+        "full_bleed_paper_all_edges": {
+          "ok": true,
+          "detail": "light paper on every edge of 5 page(s)"
+        },
+        "fonts_and_images_ready_before_print": {
+          "ok": true,
+          "detail": {
+            "fonts_status": "loaded",
+            "faces_loaded": [
+              "IBM Plex Mono 400",
+              "IBM Plex Mono 500",
+              "IBM Plex Mono 600",
+              "Poppins 400",
+              "Poppins 500",
+              "Poppins 600",
+              "Poppins 700"
+            ],
+            "images": 0,
+            "ms_to_print": 874
+          }
+        },
+        "fonts_self_hosted_no_external_requests": {
+          "ok": true,
+          "detail": {
+            "font_requests": 14,
+            "external_font_requests": []
+          }
+        }
+      },
+      "ok": true,
+      "pages": 5,
+      "name": "proposal-multipage-frame",
+      "print_mode": "frame"
+    }
+  ]
+}

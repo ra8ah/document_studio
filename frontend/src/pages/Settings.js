@@ -8,8 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Download } from "lucide-react";
+import { Trash2, Plus, Download, Upload } from "lucide-react";
+import { isSafeLogo } from "@/lib/print";
 import { toast } from "sonner";
+
+const LOGO_TYPES = ["image/svg+xml", "image/png", "image/jpeg", "image/webp"];
+const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
 const F = ({ label, k, form, set, type = "text" }) => (
   <div>
@@ -25,7 +29,14 @@ export default function Settings() {
   const nav = useNavigate();
 
   useEffect(() => {
-    api.get("/profile").then((r) => setForm(r.data));
+    api.get("/profile").then((r) => {
+      const p = r.data;
+      if (p.logo_url && !isSafeLogo(p.logo_url)) {
+        toast.message("Your logo was a remote URL, which is no longer supported. Please upload the logo file.");
+        p.logo_url = "";
+      }
+      setForm(p);
+    });
     api.get("/packages").then((r) => setPackages(r.data));
   }, []);
 
@@ -33,7 +44,27 @@ export default function Settings() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const setPrefix = (k) => (e) => setForm((f) => ({ ...f, prefixes: { ...(f.prefixes || {}), [k]: e.target.value } }));
 
-  const save = async () => { await api.put("/profile", form); toast.success("Settings saved"); };
+  const save = async () => {
+    try { await api.put("/profile", form); toast.success("Settings saved"); }
+    catch (e) { toast.error(e?.response?.data?.detail || "Save failed"); }
+  };
+
+  const onLogo = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!LOGO_TYPES.includes(file.type)) return toast.error("Use an SVG, PNG, JPEG or WebP file");
+    if (file.size > MAX_LOGO_BYTES) return toast.error("Logo must be 2 MB or smaller");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const uri = String(reader.result || "");
+      if (!isSafeLogo(uri)) return toast.error("Could not read this image");
+      setForm((f) => ({ ...f, logo_url: uri }));
+      toast.success("Logo ready — save changes to apply it to new documents");
+    };
+    reader.onerror = () => toast.error("Could not read this image");
+    reader.readAsDataURL(file); // original bytes, no re-encoding → natural resolution
+  };
 
   const addPackage = async () => {
     if (!pkg.description.trim()) return toast.error("Description required");
@@ -67,8 +98,20 @@ export default function Settings() {
           <F label="Agency name" k="agency_name" form={form} set={set} />
           <F label="Legal name" k="legal_name" form={form} set={set} />
           <div className="sm:col-span-2"><F label="Tagline" k="tagline" form={form} set={set} /></div>
-          <div className="sm:col-span-2"><F label="Logo URL" k="logo_url" form={form} set={set} />
-            {form.logo_url && <img src={form.logo_url} alt="" className="mt-3 h-12 object-contain" />}</div>
+          <div className="sm:col-span-2">
+            <Label className="mono-label">Logo</Label>
+            <div className="mt-1.5 flex flex-wrap items-center gap-3 rounded-xl border border-foreground/15 p-3">
+              {isSafeLogo(form.logo_url)
+                ? <img src={form.logo_url} alt="Logo preview" className="h-12 max-w-[200px] object-contain" data-testid="logo-preview" />
+                : <span className="text-sm text-muted-foreground">No logo — the agency name is used instead.</span>}
+              <label className="ml-auto inline-flex cursor-pointer items-center gap-1 rounded-full border border-foreground/20 px-4 py-1.5 text-sm hover:bg-foreground/5">
+                <Upload size={14} /> Upload
+                <input type="file" accept={LOGO_TYPES.join(",")} className="hidden" onChange={onLogo} data-testid="logo-upload-input" />
+              </label>
+              {form.logo_url && <Button type="button" variant="ghost" size="sm" className="rounded-full" onClick={() => setForm((f) => ({ ...f, logo_url: "" }))} data-testid="logo-remove">Remove</Button>}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">SVG (best — stays vector in PDFs) or a high-resolution PNG / JPEG / WebP, max 2 MB. Stored with your settings; remote URLs are not used.</p>
+          </div>
         </TabsContent>
 
         <TabsContent value="contact" className="grid sm:grid-cols-2 gap-4 mt-6">

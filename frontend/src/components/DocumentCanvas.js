@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { money, TYPE_MAP } from "@/lib/format";
+import { isSafeLogo } from "@/lib/print";
 import "@/styles/document.css";
 
 const parseNum = (s) => parseFloat(String(s == null ? "" : s).replace(/[^0-9.\-]/g, "")) || 0;
@@ -63,7 +64,9 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
     addSection: () => setSections((s) => [...s, { key: `s${Date.now()}`, label: String(s.length + 1).padStart(2, "0"), heading: "New section", body: "Add content…" }]),
     collect: () => {
       const root = rootRef.current;
-      const d = {};
+      // start from the stored data so non-editable fields (label, logo_url, reference_label…) survive a save
+      const d = { ...(doc.data || {}) };
+      delete d.sections;
       root.querySelectorAll("[data-field]").forEach((el) => { d[el.dataset.field] = el.innerText.trim(); });
       const line_items = [...root.querySelectorAll("tr[data-row]")].map((tr) => ({
         description: tr.querySelector(".d")?.innerText.trim() || "",
@@ -87,7 +90,9 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
     <div className="mast">
       <div>
         <div className="brand">
-          {data.logo_url ? <img src={data.logo_url} alt="" /> : <><i>●</i><Editable field="brand" editable={editable} initial={data.brand || "Your Agency"} /></>}
+          {isSafeLogo(data.logo_url)
+            ? <img src={data.logo_url} alt={data.brand || "Logo"} decoding="sync" data-testid="doc-logo" />
+            : <><i className="bdot" aria-hidden="true" /><Editable field="brand" editable={editable} initial={data.brand || "Your Agency"} /></>}
         </div>
         <Editable field="tagline" tag="div" className="mono tag" editable={editable} initial={data.tagline || ""} />
       </div>
@@ -104,7 +109,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
 
   const Table = (showTable) => showTable && (
     <>
-      <table onInput={recalc}>
+      <table className="items" onInput={recalc}>
         <colgroup><col className="c1" /><col className="c2" /><col className="c3" /><col className="c4" /></colgroup>
         <thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
         <tbody>
@@ -173,6 +178,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           <Editable field="project_reference" tag="div" className="v" editable={editable} initial={data.project_reference || ""} />
         </div>
         {Table(true)}
+        <div className="closing">
         <div className="billing">
           <div className="bnote">
             <div className="mono">Billing note</div>
@@ -198,6 +204,7 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
               <Editable field="payment_terms" tag="p" editable={editable} initial={data.payment_terms || ""} />
               <Editable field="note" tag="p" className="note" editable={editable} initial={data.note || ""} /></div>
           )}
+        </div>
         </div>
       </>
     );
@@ -241,8 +248,10 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
           <div className="section">
             <div className="mono">Pricing</div>
             {Table(true)}
-            {sumsBlock}
-            <div className="total"><div className="mono">Total</div><div className="big">{money(totals.total, currency)}</div></div>
+            <div className="closing">
+              {sumsBlock}
+              <div className="total"><div className="mono">Total</div><div className="big">{money(totals.total, currency)}</div></div>
+            </div>
           </div>
         )}
         {LEGAL_TYPES.has(doc.type) && (
@@ -259,11 +268,18 @@ const DocumentCanvas = forwardRef(function DocumentCanvas(
   }
 
   return (
-    <div className={`doc-wrap ${theme === "dark" ? "doc-dark" : "doc-light"}`}>
+    <div className={`doc-wrap ${theme === "dark" ? "doc-dark" : "doc-light"}`} data-print-target>
       <div ref={rootRef} className={`doc-page ${size === "Letter" ? "letter" : ""}`} data-testid="document-canvas">
-        {Masthead}
-        {body}
-        {Footer}
+        {/* print-frame: plain block on screen; in Firefox/Safari print its spacer rows repeat on every page as margins */}
+        <table className="print-frame" role="presentation">
+          <thead><tr><td><div className="pf-top" /></td></tr></thead>
+          <tbody><tr><td>
+            {Masthead}
+            {body}
+            {Footer}
+          </td></tr></tbody>
+          <tfoot><tr><td><div className="pf-bot" /></td></tr></tfoot>
+        </table>
       </div>
     </div>
   );

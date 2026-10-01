@@ -5,9 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#000000" />
         <meta name="description" content="A product of emergent.sh" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <!-- Self-hosted fonts (no external font requests; required for print fidelity) -->
+        <link rel="preload" href="%PUBLIC_URL%/fonts/Poppins-500-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="%PUBLIC_URL%/fonts/Poppins-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="%PUBLIC_URL%/fonts/IBMPlexMono-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="stylesheet" href="%PUBLIC_URL%/fonts/fonts.css" />
         <!--
         manifest.json provides metadata used when your web app is installed on a
         user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api, { API } from "@/lib/api";
 import DocumentCanvas from "@/components/DocumentCanvas";
+import PrintButton from "@/components/PrintButton";
+import usePrintSetup from "@/hooks/usePrintSetup";
 import { CURRENCIES, STATUSES, STATUS_META, TYPE_MAP } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +28,7 @@ export default function DocumentEditor() {
   const [doc, setDoc] = useState(null);
   const [currency, setCurrency] = useState("INR");
   const [theme, setTheme] = useState("light");
+  const [pageSize, setPageSize] = useState("A4");
   const [status, setStatus] = useState("draft");
   const [discount, setDiscount] = useState({ enabled: false, mode: "percent", value: 0, label: "Discount" });
   const [tax, setTax] = useState({ enabled: false, mode: "percent", value: 0, label: "Tax" });
@@ -39,6 +42,7 @@ export default function DocumentEditor() {
     api.get(`/documents/${id}`).then((r) => {
       const d = r.data;
       setDoc(d); setCurrency(d.currency); setTheme(d.theme); setStatus(d.status);
+      setPageSize(d.page_size === "Letter" ? "Letter" : "A4");
       if (d.discount) setDiscount({ ...discount, ...d.discount });
       if (d.tax) setTax({ ...tax, ...d.tax });
     });
@@ -48,6 +52,8 @@ export default function DocumentEditor() {
     return () => window.removeEventListener("resize", onResize);
     // eslint-disable-next-line
   }, [id]);
+
+  usePrintSetup({ size: pageSize, theme });
 
   if (!doc) return <div className="mono-label">Loading…</div>;
   const meta = TYPE_MAP[doc.type] || {};
@@ -59,7 +65,7 @@ export default function DocumentEditor() {
     const { data, line_items } = canvasRef.current.collect();
     try {
       const { data: updated } = await api.put(`/documents/${id}`, {
-        data, line_items, currency, theme, status, discount, tax,
+        data, line_items, currency, theme, status, discount, tax, page_size: pageSize,
       });
       setDoc(updated);
       if (!silent) toast.success("Saved");
@@ -73,10 +79,7 @@ export default function DocumentEditor() {
     toast.success(`Marked ${STATUS_META[s].label.toLowerCase()}`);
   };
 
-  const exportFile = (kind) => {
-    const url = kind === "docx" ? `${API}/documents/${id}/docx` : `${API}/documents/${id}/pdf?size=${kind}`;
-    window.open(url, "_blank");
-  };
+  const exportDocx = () => window.open(`${API}/documents/${id}/docx`, "_blank");
 
   const share = async () => {
     const { data } = await api.post(`/documents/${id}/share`);
@@ -119,6 +122,14 @@ export default function DocumentEditor() {
           <SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
 
+        <Select value={pageSize} onValueChange={setPageSize}>
+          <SelectTrigger className="w-[110px] rounded-full h-9" data-testid="page-size-select"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="A4" data-testid="page-size-a4">A4</SelectItem>
+            <SelectItem value="Letter" data-testid="page-size-letter">US Letter</SelectItem>
+          </SelectContent>
+        </Select>
+
         <button onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))} data-testid="doc-theme-toggle"
           className="p-2 rounded-full hover:bg-foreground/5 border border-foreground/15" title="Toggle paper theme">
           {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
@@ -143,11 +154,11 @@ export default function DocumentEditor() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="rounded-full gap-1" data-testid="export-menu"><Download size={14} /> Export</Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => exportFile("A4")} data-testid="export-pdf-a4">PDF · A4</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportFile("Letter")} data-testid="export-pdf-letter">PDF · US Letter</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportFile("docx")} data-testid="export-docx">Word · DOCX</DropdownMenuItem>
+              <DropdownMenuItem onClick={exportDocx} data-testid="export-docx">Word · DOCX</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <PrintButton size={pageSize} />
 
           <Button variant="outline" size="sm" className="rounded-full gap-1" onClick={share} data-testid="share-button"><Share2 size={14} /> Share</Button>
 
@@ -195,8 +206,8 @@ export default function DocumentEditor() {
 
       {/* Canvas */}
       <div className="py-8 px-2 overflow-x-auto" style={{ background: theme === "dark" ? "#141210" : "#E7E0D3" }}>
-        <div style={{ zoom: scale }}>
-          <DocumentCanvas ref={canvasRef} doc={doc} currency={currency} theme={theme} discount={discount} tax={tax} editable />
+        <div className="doc-zoom" style={{ zoom: scale }}>
+          <DocumentCanvas ref={canvasRef} doc={doc} currency={currency} theme={theme} discount={discount} tax={tax} size={pageSize} editable />
         </div>
       </div>
 

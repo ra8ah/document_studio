@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field, BeforeValidator, ConfigDict
 from typing_extensions import Annotated
@@ -102,6 +102,7 @@ class DocumentUpdate(BaseModel):
     model_config = ConfigDict(extra="ignore")
     theme: Optional[str] = None
     currency: Optional[str] = None
+    page_size: Optional[Literal["A4", "Letter"]] = None
     status: Optional[str] = None
     client_id: Optional[str] = None
     data: Optional[dict] = None

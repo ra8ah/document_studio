@@ -1,0 +1,116 @@
+/*
+ * Print stylesheet — the on-screen DocumentCanvas IS the printed document.
+ * Active only on pages that install a print setup (html[data-print-mode]).
+ * @page rules are injected at runtime by usePrintSetup (size / margins / paper colour).
+ */
+@media print {
+  html[data-print-mode], html[data-print-mode] body {
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 1 — hide everything that is not the document, its ancestors or its content */
+  html[data-print-mode] body *:not([data-print-target]):not([data-print-target] *):not(:has([data-print-target])) {
+    display: none !important;
+  }
+
+  /* 2 — neutralise app chrome around the document (layout, zoom, transforms, sticky…) */
+  html[data-print-mode] body *:has([data-print-target]) {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    zoom: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* 3 — the paper itself: page margins come from @page (paged) or the frame (frame) */
+  [data-print-target], [data-print-target] * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  [data-print-target] { margin: 0 !important; padding: 0 !important; zoom: 1 !important; transform: none !important; }
+  [data-print-target] .doc-page {
+    width: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    display: block !important;
+    background: transparent !important;
+    transition: none !important;
+  }
+
+  /* editing affordances never print */
+  [data-print-target] .rm,
+  [data-print-target] .doc-add-row,
+  [data-print-target] .secrm,
+  [data-print-target] [data-print-hide] { display: none !important; }
+  [data-print-target] [contenteditable],
+  [data-print-target] [contenteditable]:hover,
+  [data-print-target] [contenteditable]:focus { background: transparent !important; outline: none !important; }
+
+  /* 4 — pagination */
+  [data-print-target] table.items > thead { display: table-header-group; }
+  [data-print-target] table.items tr { break-inside: avoid; page-break-inside: avoid; }
+  [data-print-target] .mast,
+  [data-print-target] .hero,
+  [data-print-target] .parties,
+  [data-print-target] .project,
+  [data-print-target] .meta,
+  [data-print-target] .closing,
+  [data-print-target] .sums,
+  [data-print-target] .total,
+  [data-print-target] .billing,
+  [data-print-target] .pay,
+  [data-print-target] .legal,
+  [data-print-target] .sign,
+  [data-print-target] .sign .line,
+  [data-print-target] footer { break-inside: avoid; page-break-inside: avoid; }
+  [data-print-target] .hero,
+  [data-print-target] .project,
+  [data-print-target] .section > .mono,
+  [data-print-target] .section h3 { break-after: avoid; page-break-after: avoid; }
+  /* never leave the closing footer stranded on a page of its own */
+  [data-print-target] footer { break-before: avoid; page-break-before: avoid; }
+  [data-print-target] p,
+  [data-print-target] .body,
+  [data-print-target] .sub { orphans: 3; widows: 3; }
+
+  /* 5a — "paged" mode (Chromium): frame spacers unused */
+  html[data-print-mode="paged"] [data-print-target] .print-frame > thead,
+  html[data-print-mode="paged"] [data-print-target] .print-frame > tfoot { display: none !important; }
+
+  /* 5b — "frame" mode (Firefox / Safari): @page margin 0 + repeating spacer rows */
+  html[data-print-mode="frame"] [data-print-target] .print-frame {
+    display: table !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+  }
+  html[data-print-mode="frame"] [data-print-target] .print-frame > thead { display: table-header-group !important; }
+  html[data-print-mode="frame"] [data-print-target] .print-frame > tfoot { display: table-footer-group !important; }
+  html[data-print-mode="frame"] [data-print-target] .print-frame > tbody { display: table-row-group !important; }
+  html[data-print-mode="frame"] [data-print-target] .print-frame > * > tr { display: table-row !important; }
+  html[data-print-mode="frame"] [data-print-target] .print-frame > * > tr > td {
+    display: table-cell !important;
+    padding: 0 16mm !important;
+    border: 0 !important;
+  }
+  html[data-print-mode="frame"] [data-print-target] .print-frame .pf-top { height: 14mm; }
+  html[data-print-mode="frame"] [data-print-target] .print-frame .pf-bot { height: 16mm; }
+}

@@ -6,6 +6,8 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
 import io
+import re
+import base64
 import csv
 import json
 import secrets
@@ -21,9 +23,8 @@ from pydantic import BaseModel
 
 import auth
 from models import BusinessProfile, ClientIn, DocumentIn, DocumentUpdate, PackageIn
-from renderer import render_document, compute_totals, TYPE_META
+from renderer import compute_totals, TYPE_META
 from docdata import build_default_data, default_line_items
-import pdf_export
 import docx_export
 
 mongo_url = os.environ["MONGO_URL"]
@@ -135,9 +136,35 @@ async def read_profile(user=Depends(current_user)):
     return await get_profile()
 
 
+LOGO_DATA_URI = re.compile(r"^data:image/(svg\+xml|png|jpeg|webp);base64,[A-Za-z0-9+/=\s]+$")
+MAX_LOGO_CHARS = 2_800_000  # ~2 MB binary once base64-encoded
+
+
+def validate_logo(value) -> str:
+    """Logos must be an uploaded image embedded as a data URI. Remote URLs are rejected
+    so printing never depends on (or leaks requests to) third-party hosts."""
+    v = (value or "").strip()
+    if not v:
+        return ""
+    if len(v) > MAX_LOGO_CHARS:
+        raise HTTPException(413, "Logo is too large (max 2 MB)")
+    if not LOGO_DATA_URI.match(v):
+        raise HTTPException(400, "Logo must be an uploaded SVG, PNG, JPEG or WebP image (remote URLs are not allowed)")
+    if v.startswith("data:image/svg+xml"):
+        try:
+            svg = base64.b64decode(v.split(",", 1)[1]).decode("utf-8", "ignore").lower()
+        except Exception:
+            raise HTTPException(400, "Invalid SVG logo")
+        if "<script" in svg or "javascript:" in svg or "<foreignobject" in svg:
+            raise HTTPException(400, "SVG logo contains disallowed content")
+    return v
+
+
 @api.put("/profile")
 async def update_profile(body: dict, user=Depends(current_user)):
     body.pop("_id", None)
+    if "logo_url" in body:
+        body["logo_url"] = validate_logo(body.get("logo_url"))
     await db.profile.update_one({"_id": "singleton"}, {"$set": body}, upsert=True)
     return await get_profile()
 
@@ -199,7 +226,7 @@ async def _build_document(dtype: str, client_id, theme, currency, profile):
     doc = {
         "type": dtype, "number": number, "status": "draft",
         "client_id": client_id, "client_name": (cl.get("name") if cl else "") if cl else "",
-        "theme": theme or "light", "currency": cur,
+        "theme": theme or "light", "currency": cur, "page_size": "A4",
         "data": data, "line_items": default_line_items(dtype),
         "discount": {"enabled": False, "mode": "percent", "value": 0, "label": "Discount"},
         "tax": {"enabled": False, "mode": "percent", "value": 0, "label": "Tax"},
@@ -257,6 +284,8 @@ async def get_document(did: str, user=Depends(current_user)):
 @api.put("/documents/{did}")
 async def update_document(did: str, body: DocumentUpdate, user=Depends(current_user)):
     update = {k: v for k, v in body.model_dump(exclude_none=True).items()}
+    if "data" in update and "logo_url" in update["data"]:
+        update["data"]["logo_url"] = validate_logo(update["data"].get("logo_url"))
     if "line_items" in update:
         update["line_items"] = [dict(i) for i in update["line_items"]]
     if "client_id" in update and update["client_id"]:
@@ -356,24 +385,6 @@ async def mark_paid(did: str, user=Depends(current_user)):
 
 
 # ---------------- exports ----------------
-@api.get("/documents/{did}/pdf")
-async def document_pdf(did: str, request: Request, size: str = "A4"):
-    token = request.query_params.get("token")
-    d = await db.documents.find_one({"_id": ObjectId(did)})
-    if not d:
-        raise HTTPException(404, "Not found")
-    try:
-        await auth.get_current_user_from(request, db)
-    except HTTPException:
-        if not (token and d.get("share_token") == token):
-            raise
-    html = render_document(ser(d), page_size=size if size in ("A4", "Letter") else "A4")
-    pdf = await pdf_export.html_to_pdf(html, size)
-    fn = f"{d.get('number','document')}.pdf"
-    return StreamingResponse(io.BytesIO(pdf), media_type="application/pdf",
-                             headers={"Content-Disposition": f'inline; filename="{fn}"'})
-
-
 @api.get("/documents/{did}/docx")
 async def document_docx(did: str, user=Depends(current_user)):
     d = await db.documents.find_one({"_id": ObjectId(did)})
@@ -407,17 +418,6 @@ async def share_view(token: str):
     s = ser(d)
     s["totals"] = compute_totals(d)
     return s
-
-
-@api.get("/share/{token}/pdf")
-async def share_pdf(token: str, size: str = "A4"):
-    d = await db.documents.find_one({"share_token": token})
-    if not d:
-        raise HTTPException(404, "Not found")
-    html = render_document(ser(d), page_size=size if size in ("A4", "Letter") else "A4")
-    pdf = await pdf_export.html_to_pdf(html, size)
-    return StreamingResponse(io.BytesIO(pdf), media_type="application/pdf",
-                             headers={"Content-Disposition": f'inline; filename="{d.get("number")}.pdf"'})
 
 
 # ---------------- packages / saved items ----------------
@@ -591,5 +591,4 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
-    await pdf_export.shutdown()
     client.close()

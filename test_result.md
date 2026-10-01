@@ -101,3 +101,21 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+user_problem_statement: "Client-side Print / Save as PDF via window.print() (vector), replacing server-side Playwright PDF. Remove pdf_export.py + PDF routes, slim Dockerfile, self-hosted fonts, logo upload (data URI only), page size selector, print hint."
+
+frontend:
+  - task: "Print / Save as PDF (editor + share page), page size selector, logo upload in Settings"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/components/PrintButton.js, frontend/src/styles/print.css, frontend/src/lib/print.js, frontend/src/pages/DocumentEditor.js, frontend/src/pages/ShareView.js, frontend/src/pages/Settings.js, frontend/src/components/DocumentCanvas.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "PDF verified by scripts/verify_print.py (10/10). Needs UI regression of existing editor features."
+
+agent_communication:
+  - agent: "main"
+    message: "Server PDF removed by design (backend_test.py test_pdf_a4/test_pdf_letter/share-pdf assertion now 404 = expected). Regression-test existing features + new print UI."
